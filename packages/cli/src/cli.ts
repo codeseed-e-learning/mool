@@ -1,22 +1,31 @@
 import { CommandRegistry } from "./command-registry";
 import { Parser } from "./parser";
-
-import { HelpCommand } from "./commands/help-command";
-import { VersionCommand } from "./commands/version-command";
+import { CommandProvider } from "./providers/command-provider";
 
 export class CLI {
-  private readonly registry = new CommandRegistry();
-  private readonly parser = new Parser();
+  private readonly registry: CommandRegistry;
+  private readonly parser: Parser;
+  private readonly provider: CommandProvider;
 
   constructor() {
-    this.registerCommands();
+    this.registry = new CommandRegistry();
+    this.parser = new Parser();
+    this.provider = new CommandProvider();
+
+    this.bootstrap();
   }
 
-  private registerCommands(): void {
-    this.registry.register(new HelpCommand());
-    this.registry.register(new VersionCommand());
+  /**
+   * Bootstrap the CLI.
+   * Registers all available commands.
+   */
+  private bootstrap(): void {
+    this.provider.register(this.registry);
   }
 
+  /**
+   * Execute the CLI.
+   */
   run(argv: string[]): void {
     const { command, args } = this.parser.parse(argv);
 

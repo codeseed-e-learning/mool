@@ -1,0 +1,11 @@
+{
+  "name": "mool-basic-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "mool dev",
+    "start": "mool start"
+  },
+  "dependencies": {}
+}
