@@ -1,1 +1,5 @@
-console.log("Welcome to Mool 🚀");
+import { CLI } from "./cli";
+
+const cli = new CLI();
+
+cli.run(process.argv);
