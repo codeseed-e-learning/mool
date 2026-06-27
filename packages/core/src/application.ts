@@ -1,4 +1,5 @@
 import { Server } from "../../http/src";
+import "../../../routes/web";
 
 export class Application {
   private readonly server = new Server();
