@@ -1,17 +1,23 @@
+import { Request } from "../../http/src/request";
 import { Route } from "./route";
-import { RouteDefinition } from "./route-definition";
+import { RouteMatcher } from "./matchers/route-matcher";
 
 export class Router {
-  resolve(method: string, path: string): unknown {
-    const route = Route.all().find(
-      (route: RouteDefinition) =>
-        route.method === method && route.path === path
+  private readonly matcher = new RouteMatcher();
+
+  resolve(request: Request): unknown {
+    const match = this.matcher.match(
+      request.method,
+      request.url,
+      Route.all()
     );
 
-    if (!route) {
+    if (!match) {
       return "404 Not Found";
     }
 
-    return route.handler();
+    request.params = match.params;
+
+    return match.route.handler(request);
   }
 }

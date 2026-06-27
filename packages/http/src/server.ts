@@ -14,10 +14,7 @@ export class Server {
 
       console.log(`${request.method} ${request.url}`);
 
-      const result = router.resolve(
-        request.method,
-        request.url
-      );
+      const result = router.resolve(request);
 
       response.send(String(result));
     });

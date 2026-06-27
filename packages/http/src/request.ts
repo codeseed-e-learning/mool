@@ -1,6 +1,8 @@
 import { IncomingMessage } from "node:http";
 
 export class Request {
+  
+  public params: Record<string, string> = {};
   constructor(
     private readonly request: IncomingMessage
   ) {}
