@@ -1,6 +1,11 @@
 import { Route } from "../packages/router/src";
 
-Route.get("/", () => "Welcome to Mool");
+
+import { HomeController } from "../app/controllers/home-controller";
+
+Route.get("/", HomeController.index);
+
+
 
 
 Route.get("/about", () => "About Page");
