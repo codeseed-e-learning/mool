@@ -5,28 +5,36 @@ import { RouteHandler } from "./contracts/route-handler";
 export class Route {
   private static readonly routes = new RouteCollection();
 
-  static get(path: string, handler: RouteHandler): void {
-    this.routes.add(
-      new RouteDefinition("GET", path, handler)
-    );
+  static get(path: string, handler: RouteHandler): RouteDefinition {
+    const route = new RouteDefinition("GET", path, handler);
+
+    this.routes.add(route);
+
+    return route;
   }
 
-  static post(path: string, handler: RouteHandler): void {
-    this.routes.add(
-      new RouteDefinition("POST", path, handler)
-    );
+  static post(path: string, handler: RouteHandler): RouteDefinition {
+    const route = new RouteDefinition("POST", path, handler);
+
+    this.routes.add(route);
+
+    return route;
   }
 
-  static put(path: string, handler: RouteHandler): void {
-    this.routes.add(
-      new RouteDefinition("PUT", path, handler)
-    );
+  static put(path: string, handler: RouteHandler): RouteDefinition {
+    const route = new RouteDefinition("PUT", path, handler);
+
+    this.routes.add(route);
+
+    return route;
   }
 
-  static delete(path: string, handler: RouteHandler): void {
-    this.routes.add(
-      new RouteDefinition("DELETE", path, handler)
-    );
+  static delete(path: string, handler: RouteHandler): RouteDefinition {
+    const route = new RouteDefinition("DELETE", path, handler);
+
+    this.routes.add(route);
+
+    return route;
   }
 
   static all(): RouteDefinition[] {

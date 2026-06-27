@@ -1,9 +1,9 @@
 import { Route } from "../packages/router/src";
+import {AuthController} from "../app/controllers/AuthController";
 
-
-import { HomeController } from "../app/controllers/home-controller";
-
-Route.get("/", HomeController.index);
+import {AuthMiddleware} from "../app/middleware/auth-middleware"
+Route.get("/", AuthController.index)
+  .middleware(new AuthMiddleware());
 
 
 

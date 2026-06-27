@@ -1,7 +1,8 @@
 import { Server } from "../../http/src";
-import "../../../routes/web";
+
 
 import { Container, Constructor } from "./container";
+import { loadRoutes } from "./bootstrap/load-routes"
 
 export class Application {
   public readonly container: Container;
@@ -22,6 +23,7 @@ export class Application {
 
   bootstrap(): void {
     console.log("🚀 Bootstrapping Mool...");
+     loadRoutes();
   }
 
   start(): void {

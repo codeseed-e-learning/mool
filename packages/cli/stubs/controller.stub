@@ -1,0 +1,5 @@
+export class {{controllerName}} {
+  static index(): string {
+    return "";
+  }
+}

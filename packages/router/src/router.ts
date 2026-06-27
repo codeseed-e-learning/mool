@@ -18,6 +18,15 @@ export class Router {
 
     request.params = match.params;
 
+    // Execute middlewares
+    for (const middleware of match.route.middlewares) {
+      const allowed = middleware.handle(request);
+
+      if (!allowed) {
+        return "401 Unauthorized";
+      }
+    }
+
     return match.route.handler(request);
   }
 }
