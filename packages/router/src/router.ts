@@ -6,11 +6,16 @@ export class Router {
   private readonly matcher = new RouteMatcher();
 
   resolve(request: Request): unknown {
-    const match = this.matcher.match(
-      request.method,
-      request.url,
-      Route.all()
+    console.log("Method:", request.method);
+    console.log("URL:", request.url);
+
+    console.log(
+      Route.all().map((route) => ({
+        method: route.method,
+        path: route.path,
+      })),
     );
+    const match = this.matcher.match(request.method, request.url, Route.all());
 
     if (!match) {
       return "404 Not Found";

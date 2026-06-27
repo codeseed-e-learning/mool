@@ -1,8 +1,12 @@
 import { IncomingMessage } from "node:http";
 
 export class Request {
-  
   public params: Record<string, string> = {};
+
+  public query: Record<string, string> = {};
+
+  public body: Record<string, unknown> = {};
+
   constructor(
     private readonly request: IncomingMessage
   ) {}
@@ -17,5 +21,9 @@ export class Request {
 
   get headers() {
     return this.request.headers;
+  }
+
+  get raw(): IncomingMessage {
+    return this.request;
   }
 }

@@ -8,15 +8,46 @@ export class Server {
   listen(port: number): void {
     const router = new Router();
 
-    const server = http.createServer((req, res) => {
+    const server = http.createServer(async (req, res) => {
       const request = new Request(req);
       const response = new Response(res);
 
       console.log(`${request.method} ${request.url}`);
 
-      const result = router.resolve(request);
+      // Read request body
+      const chunks: Buffer[] = [];
 
-      response.send(String(result));
+      for await (const chunk of req) {
+        chunks.push(chunk);
+      }
+
+      const rawBody = Buffer.concat(chunks).toString();
+
+      if (rawBody.length > 0) {
+        try {
+          request.body = JSON.parse(rawBody);
+        } catch {
+          request.body = {};
+        }
+      }
+
+      try {
+        const result = router.resolve(request);
+
+        if (typeof result === "string") {
+          response.send(result);
+          return;
+        }
+
+        response.json(result);
+      } catch (error) {
+        console.error(error);
+
+        response.json({
+          success: false,
+          message: "Internal Server Error",
+        });
+      }
     });
 
     server.listen(port, () => {
