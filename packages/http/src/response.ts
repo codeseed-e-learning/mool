@@ -5,15 +5,27 @@ export class Response {
     private readonly response: ServerResponse
   ) {}
 
+  status(code: number): this {
+    this.response.statusCode = code;
+
+    return this;
+  }
+
+  header(name: string, value: string): this {
+    this.response.setHeader(name, value);
+
+    return this;
+  }
+
   send(body: string): void {
-    this.response.statusCode = 200;
-    this.response.setHeader("Content-Type", "text/plain");
+    this.header("Content-Type", "text/plain");
+
     this.response.end(body);
   }
 
   json(data: unknown): void {
-    this.response.statusCode = 200;
-    this.response.setHeader("Content-Type", "application/json");
+    this.header("Content-Type", "application/json");
+
     this.response.end(JSON.stringify(data));
   }
 }
