@@ -4,6 +4,12 @@
   "description": "Laravel-inspired backend framework for JavaScript",
   "type": "module",
   "main": "dist/index.js",
+  "bin": {
+    "mool": "./bin/mool.js"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "tsx packages/cli/src/index.ts",
     "build": "tsc"
@@ -15,5 +21,8 @@
     "backend",
     "laravel"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "tsx": "^4.22.4"
+  }
 }

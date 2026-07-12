@@ -1,0 +1,16 @@
+{
+  "name": "@mool/core",
+  "version": "0.0.1",
+  "description": "Core package for the Mool framework.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc"
+  }
+}

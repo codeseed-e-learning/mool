@@ -9,14 +9,19 @@ export class NewCommand implements Command {
   readonly description = "Create a new Mool project";
 
   async execute(args: string[]): Promise<void> {
-    const projectName = args[0];
+    const projectName = args.find((arg) => !arg.startsWith("--"));
 
     if (!projectName) {
       console.error("Please provide a project name.");
       console.log("\nUsage:");
-      console.log("  mool new <project-name>");
+      console.log("  mool new <project-name> [--<template>]");
+      console.log("\nExamples:");
+      console.log("  mool new my-app --basic");
+      console.log("  mool new my-app --template=basic");
       return;
     }
+
+    const templateName = this.resolveTemplateName(args);
 
     const fileSystem = new FileSystem();
     const templateRepository = new TemplateRepository();
@@ -27,7 +32,7 @@ export class NewCommand implements Command {
     );
 
     try {
-      await generator.generate(projectName);
+      await generator.generate(projectName, templateName);
     } catch (error) {
       if (error instanceof Error) {
         console.error(error.message);
@@ -35,5 +40,19 @@ export class NewCommand implements Command {
         console.error("Something went wrong.");
       }
     }
+  }
+
+  private resolveTemplateName(args: string[]): string {
+    const explicitFlag = args.find((arg) => arg.startsWith("--template="));
+
+    if (explicitFlag) {
+      return explicitFlag.slice("--template=".length);
+    }
+
+    const shorthandFlag = args.find(
+      (arg) => arg.startsWith("--") && arg !== "--template"
+    );
+
+    return shorthandFlag ? shorthandFlag.slice(2) : "basic";
   }
 }

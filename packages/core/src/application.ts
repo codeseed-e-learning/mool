@@ -1,8 +1,8 @@
 import { Server } from "../../http/src";
-import { RouteServiceProvider } from "../../../app/provider/route-service-provider";
 
 import { Container, Constructor } from "./container";
 import { ProviderRepository } from "./providers/provider-repository";
+import { Provider } from "./providers/provider";
 
 export class Application {
   public readonly container: Container;
@@ -19,8 +19,10 @@ export class Application {
     this.server = this.container.make(Server);
 
     this.providers = new ProviderRepository();
+  }
 
-    this.providers.add(new RouteServiceProvider());
+  register(provider: Provider): void {
+    this.providers.add(provider);
   }
 
   make<T>(constructor: Constructor<T>): T {
@@ -34,7 +36,7 @@ export class Application {
     this.providers.boot();
   }
 
-  start(): void {
-    this.server.listen(3000);
+  start(port = 3000): void {
+    this.server.listen(port);
   }
 }
