@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "tsx": "^4.22.4",
-    "@codeseedelearning/mool-core": "^0.0.1",
-    "@codeseedelearning/mool-database": "^0.0.1"
+    "@codeseedelearning/mool-core": "^0.0.3",
+    "@codeseedelearning/mool-database": "^0.0.2"
   }
 }

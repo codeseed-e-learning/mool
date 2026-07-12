@@ -8,13 +8,13 @@ export default class extends Migration {
         : "id INTEGER PRIMARY KEY AUTOINCREMENT";
 
     await Database.execute(`
-      CREATE TABLE IF NOT EXISTS {{tableName}} (
+      CREATE TABLE IF NOT EXISTS posts (
         ${idColumn}
       )
     `);
   }
 
   async down(): Promise<void> {
-    await Database.execute(`DROP TABLE IF EXISTS {{tableName}}`);
+    await Database.execute(`DROP TABLE IF EXISTS posts`);
   }
 }

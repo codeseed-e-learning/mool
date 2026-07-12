@@ -1,5 +1,5 @@
 export abstract class Migration {
-  abstract up(): void;
+  abstract up(): void | Promise<void>;
 
-  abstract down(): void;
+  abstract down(): void | Promise<void>;
 }

@@ -39,14 +39,15 @@ registry).
 | `@codeseedelearning/mool-events` | `Event.listen()` / `Event.dispatch()` pub-sub | 0.0.1 | ✅ |
 | `@codeseedelearning/mool-validation` | Rule-based request validation | 0.0.1 | ✅ |
 | `@codeseedelearning/mool-cache` | In-memory cache with TTL | 0.0.1 | ✅ |
-| `@codeseedelearning/mool-database` | SQLite connection + migrations (`node:sqlite`, Node ≥22.5) | 0.0.1 | ✅ |
-| `@codeseedelearning/mool-orm` | Minimal Active Record `Model` (find/all/where/create/update/delete) | 0.0.1 | ✅ |
+| `@codeseedelearning/mool-database` | SQLite (`node:sqlite`) + MySQL (`mysql2`) connections, migrations — async | 0.0.2 local (0.0.1 published) | 🔧 |
+| `@codeseedelearning/mool-orm` | Minimal async Active Record `Model` (find/all/where/create/update/delete) | 0.0.2 local (0.0.1 published) | 🔧 |
 | `@codeseedelearning/mool-jwt` | Zero-dependency HS256 JWT sign/verify | 0.0.1 | ✅ |
 | `@codeseedelearning/mool-auth` | Password hashing (scrypt) + JWT auth (`createToken`, `AuthMiddleware`) | 0.0.2 | ✅ |
 | `@codeseedelearning/mool-view` | Minimal zero-dependency view engine (`<%= %>`/`<% %>` tags), `View.render()`, `html()` | 0.0.1 | ✅ |
 
 **Status notes:**
-- **All 13 packages are published.** Verified end-to-end from a completely fresh `npx @codeseedelearning/mool new demo-app --basic` → `npm install` → `npm run dev`, purely from the public registry (no cloning, no workspace symlinks): `/`, `/health`, registration (password hashing), login (real JWT), `/profile` (real HTTP 401 without a token, 200 with the attached user), `/welcome` (correct `Content-Type: text/html`, rendered loop), and `/cached-time` (consistent cached value) all confirmed working.
+- All 13 packages were fully published at one point; since then, `mool` (CLI, hot reload) and `mool-database`/`mool-orm` (MySQL support, below) have local changes **not yet republished**.
+- **MySQL support added.** `mool-database` now supports MySQL/MariaDB via `mysql2` alongside SQLite — driver chosen at runtime by `DB_CONNECTION` (env var), defaulting to SQLite (zero config, unchanged behavior). This required making `Database`/`Model` genuinely async (`mysql2` is real network I/O; there's no way to represent that behind a sync API without hacks), which is a **breaking API change**: every `Database.query/execute` and every `Model` method (`all`/`find`/`where`/`create`/instance `update`/`delete`) now returns a `Promise` and must be `await`ed. Verified live against a real local MySQL/MariaDB server (full create→find→where→update→delete→verify cycle, in a dedicated `mool_test` database, dropped afterward) — not just structurally reviewed. The SQLite path was fully regression-tested afterward in `my-app` with zero issues.
 - `core`/`router`/`http` went through two published versions: `0.0.1` → `0.0.2` (fixed async handlers not being awaited) → `0.0.3` (the middleware pipeline rework: `Request.state`, `HttpResponse`, real `next()`-based chaining).
 
 ---
@@ -157,14 +158,15 @@ const { valid, errors } = validate(request.body, {
 import { Cache } from "@codeseedelearning/mool-cache";
 const value = await Cache.remember("key", 10, () => expensiveWork());
 
-// database/orm: real SQLite persistence (node:sqlite, no native deps)
+// database/orm: SQLite (default) or MySQL, switch via DB_CONNECTION in .env
+// — fully async either way (mysql2 is real network I/O)
 import { Model } from "@codeseedelearning/mool-orm";
 class User extends Model {
   static table = "users";
 }
-User.all();                 // SELECT * FROM users
-User.find(1);                // SELECT * FROM users WHERE id = 1
-User.create({ name: "Amit", email: "amit@example.com" });
+await User.all();                 // SELECT * FROM users
+await User.find(1);                // SELECT * FROM users WHERE id = 1
+await User.create({ name: "Amit", email: "amit@example.com" });
 
 // auth: JWT only (no sessions/OAuth) — password hashing + token issuance
 import { hashPassword, verifyPassword, createToken, AuthMiddleware }
@@ -212,7 +214,9 @@ validation + password hashing + events), `POST /login` (issues a JWT),
 | `mool start` | Same, but runs once — no file watching. Use for production/always-on. |
 | `mool serve` | Starts a bare server with **no** routes loaded — a leftover from early development, not project-aware. Prefer `dev`/`start`. Should probably be removed. |
 | `mool make:controller <Name>` | Generate `app/Controllers/<Name>.ts` from a stub |
+| `mool make:model <Name>` | Generate `app/Models/<Name>.ts` from a stub, with the table name guessed via a small built-in pluralizer (`Post` → `posts`, `Category` → `categories`, `BlogPost` → `blog_posts`) — not a full inflector, irregular plurals need a manual fix |
 | `mool migrate` | Run every pending file in `database/migrations/`, tracked in a `migrations` table |
+| `mool migrate:status` | List every migration with ✅ Ran (+ timestamp) or ⏳ Pending — runs nothing, safe to call any time |
 | `mool make:migration <name>` | Generate a timestamped migration file (table name inferred from `create_x_table`-style names) |
 
 ---
@@ -232,7 +236,9 @@ to end (not a stub).
 | `mool dev` | Finds `bootstrap/app.ts` in the current directory, dynamically imports it (registering routes as a side effect), starts the HTTP server on `PORT` or `3000` — run under `tsx watch`, so any change to a loaded file (routes, controllers, models, migrations, views) kills and restarts the process automatically. Implemented in the CLI's `bin/mool.js` launcher (checks if the first arg is `dev`, and if so spawns `tsx watch <entry>` instead of a plain one-shot `tsx <entry>`), not in `DevCommand` itself — the command doesn't know or care that it's being watched. |
 | `mool start` | Same underlying command as `dev`, but the launcher runs it once (plain `tsx`, no watch) — the real dev/prod distinction that was previously missing |
 | `mool make:controller <Name>` | Generates `app/Controllers/<Name>.ts` from a stub file, resolved relative to the CLI package itself (works standalone, not just in the monorepo) |
+| `mool make:model <Name>` | Generates `app/Models/<Name>.ts` extending `Model` with `static table` pre-filled. Table name guessed via a small built-in pluralizer (PascalCase → snake_case, then common English pluralization rules) — not a full inflector, so irregular plurals (`Person` → `people`, not `persons`) need a manual edit. Rejects if the file already exists. |
 | `mool migrate` | Runs every pending file in `database/migrations/` in filename order, tracking what's applied in a `migrations` table so re-runs are a no-op |
+| `mool migrate:status` | Wraps `mool-database`'s new `getMigrationStatus()` — creates the tracking table if missing (same as `runMigrations`, but applies nothing), lists every migration file with ✅/⏳ and the applied timestamp, and a pending count with a hint to run `mool migrate` |
 | `mool make:migration <name>` | Generates a timestamp-prefixed migration file (`20260712185544_create_posts_table.ts`), deriving the table name from `create_x_table`-style names |
 | `.env` auto-setup on `mool new` | If a template ships `.env.example`, it's copied to `.env` automatically, and an empty `APP_KEY=` line is filled with a random 32-byte key (`crypto.randomBytes(32).toString("base64url")`) — mirrors Laravel's `key:generate`, so auth works with zero manual setup |
 
@@ -299,35 +305,83 @@ to end (not a stub).
 | `Cache.remember(key, ttl, callback)` | Get-or-compute-and-store pattern |
 | `Cache.flush()` | Clears everything |
 
-### Database — `@codeseedelearning/mool-database` (published)
+### Database — `@codeseedelearning/mool-database@0.0.2` (local, not yet published)
+
+Two drivers behind one API — SQLite (`node:sqlite`, zero external
+dependency, default) and MySQL/MariaDB (via `mysql2`, the one genuine
+external dependency anywhere in this framework — there's no built-in Node
+MySQL client and hand-rolling the wire protocol isn't reasonable the way
+hand-rolling JWT/scrypt was). Both drivers use `?` positional placeholders,
+so `query`/`execute` calls are portable between them; raw DDL generally
+isn't (see `Database.dialect()` below).
+
+**Breaking change from `0.0.1`:** every method is now `async`/returns a
+`Promise` — `0.0.1`'s SQLite-only API was synchronous, which can't
+represent MySQL's real network I/O, so this was unavoidable to add a
+second driver correctly (rejected the alternative of faking sync-over-async).
 
 | Feature | Details |
 |---|---|
-| `Database.connect(path?)` | Opens a `node:sqlite` connection (Node's built-in SQLite, no native dependency to compile — requires Node ≥22.5). Defaults to `database/database.sqlite`, auto-creates the directory. Lazily connects on first query if you never call this. |
-| `Database.query(sql, params?)` | Runs a `SELECT`, returns rows as plain objects |
-| `Database.execute(sql, params?)` | Runs an `INSERT`/`UPDATE`/`DELETE`, returns `{ lastInsertRowid, changes }` |
-| `Database.close()` | Closes the connection |
-| `Migration` (abstract class) | `up()` / `down()` — write raw SQL against `Database.execute()` |
-| `runMigrations(dir?)` | Creates a `migrations` tracking table if missing, runs every not-yet-applied file in `database/migrations/` in filename order, records each as applied |
+| `Database.connect(config?)` | Picks a driver: `config.connection` → `DB_CONNECTION` env var → `"sqlite"` default. For MySQL: host/port/user/password/database from `config` or `DB_HOST`/`DB_PORT`/`DB_USERNAME`/`DB_PASSWORD`/`DB_DATABASE`. For SQLite: `config.database` or `DB_DATABASE` overrides the default `database/database.sqlite` path. Lazily called on first query if you never call it yourself. |
+| `Database.query(sql, params?)` | `async` — runs a `SELECT`, returns rows as plain objects |
+| `Database.execute(sql, params?)` | `async` — runs an `INSERT`/`UPDATE`/`DELETE`, returns `{ lastInsertRowid, changes }` (mapped from `mysql2`'s `insertId`/`affectedRows` on the MySQL side) |
+| `Database.close()` | `async` — closes the active connection/pool |
+| `Database.dialect()` | Returns `"sqlite"` or `"mysql"` — for migrations that need different DDL per database (see ORM section and the MySQL guide in `guide.md`) |
+| `Migration` (abstract class) | `up()` / `down()`, now `void \| Promise<void>` — write (`await`ed) SQL against `Database.execute()` |
+| `runMigrations(dir?)` | `async`. Creates a `migrations` tracking table (dialect-aware DDL) if missing, `await`s every not-yet-applied file in `database/migrations/` in filename order, records each as applied |
 
-### ORM — `@codeseedelearning/mool-orm` (published)
+Live-verified against a real local MySQL/MariaDB server: full
+create→find→where→update→delete cycle in a dedicated test database
+(created and dropped as part of verification, never touching any other
+data on that server). The SQLite path was fully regression-tested
+afterward with zero issues.
 
-A minimal Active Record-style layer on top of `mool-database`.
+### ORM — `@codeseedelearning/mool-orm@0.0.2` (local, not yet published)
+
+An Active Record-style layer on top of `mool-database`, with a real
+chainable query builder underneath the `Model` static methods. Every
+method is `async` — depends on `mool-database@^0.0.2`.
 
 | Feature | Details |
 |---|---|
-| `Model` (abstract class) | Subclass with a `static table = "users"`; the row's columns become instance properties automatically (`Object.assign` from the raw SQLite row) |
-| `Model.all()` | `SELECT * FROM table` |
-| `Model.find(id)` | `SELECT * FROM table WHERE id = ?`, returns `null` if not found |
-| `Model.where(column, value)` | `SELECT * FROM table WHERE column = ?` |
-| `Model.create(attributes)` | `INSERT`, then re-fetches and returns the created row (so auto-generated columns like `id` come back populated) |
-| `instance.update(attributes)` | `UPDATE ... WHERE id = ?`, then merges the new attributes onto the in-memory instance |
-| `instance.delete()` | `DELETE ... WHERE id = ?` |
+| `Model` (abstract class) | Subclass with a `static table = "users"`; the row's columns become instance properties automatically (`Object.assign` from the raw row) |
+| `Model.query()` | Returns a `QueryBuilder` instance for manual chaining — every other static read method below is a shortcut onto this |
+| `Model.all()` | `async` — `SELECT * FROM table` |
+| `Model.find(id)` / `findOrFail(id)` | `async` — `WHERE id = ?`; `find` returns `null` if missing, `findOrFail` throws `ModelNotFoundError` |
+| `Model.first()` | `async` — first matching row (or of the whole table), `null` if none |
+| `Model.firstWhere(column, op?, value)` | `async` — shortcut for `.where(...).first()` |
+| `Model.count()` / `Model.exists()` | `async` — row count / whether any row matches |
+| `Model.paginate(page?, perPage?)` | `async` — `{ data, total, page, perPage, lastPage }` |
+| `Model.where(column, value)` / `.where(column, operator, value)` | Chainable — equality shortcut, or an explicit operator from a whitelist (`=`,`!=`,`<>`,`<`,`>`,`<=`,`>=`,`LIKE`,`NOT LIKE`) enforced in `QueryBuilder` to prevent SQL injection through the operator argument |
+| `.orWhere(...)` | Chainable — same signature as `.where()`, joined with `OR` instead of `AND` |
+| `.whereIn(column, values)` | Chainable — `column IN (?, ?, ...)` |
+| `.whereNull(column)` / `.whereNotNull(column)` | Chainable |
+| `.select(...columns)` | Chainable — restricts returned columns (default `*`) |
+| `.orderBy(column, direction?)` | Chainable — `"asc"` (default) or `"desc"` |
+| `.limit(n)` / `.offset(n)` | Chainable |
+| `.get()` | Terminal — runs the built query, maps rows to `Model` instances |
+| `Model.create(attributes)` | `async` — `INSERT`, then re-fetches and returns the created row (so auto-generated columns like `id` come back populated) |
+| `instance.update(attributes)` | `async` — `UPDATE ... WHERE id = ?`, then merges the new attributes onto the in-memory instance |
+| `instance.delete()` | `async` — `DELETE ... WHERE id = ?` |
+| `ModelNotFoundError` | Thrown by `findOrFail`; exported from `mool-orm` for `instanceof` checks in route handlers |
 
-What it does **not** have: relationships (hasMany/belongsTo), a query
-builder beyond `where` with a single equality condition, validation hooks,
-timestamps management, soft deletes, or a schema/column-type system. It's
-genuinely minimal — enough for real CRUD, not an Eloquent replacement.
+**Design note — `QueryBuilder` as a thenable:** `Model.where(...)` doesn't
+return a bare `Promise`; it returns a `QueryBuilder` that implements
+`PromiseLike<T[]>` (a `then()` method that delegates to `.get()`). That
+means every pre-existing call site in the codebase — `await User.where(...)`,
+`const [user] = await User.where(...)` — kept working unmodified after the
+rewrite, while new code can also chain `.orderBy().limit().offset()`
+before awaiting. This was the load-bearing compatibility decision for the
+whole rewrite; verified via a 21-assertion script covering both the old
+call patterns and every new method, then re-verified through the live
+`my-app` HTTP server (`/users`, `/login`, `/profile`) end to end.
+
+What it still does **not** have: relationships (hasMany/belongsTo), eager
+loading, validation hooks, automatic timestamps, soft deletes, model
+hooks/events, attribute casting, or a schema/column-type system. Complex
+joins/aggregates/mixed `AND`/`OR` grouping still drop down to
+`Database.query()` directly — this is an intentional scope boundary, not
+a gap to fill later.
 
 ### JWT — `@codeseedelearning/mool-jwt` (published)
 
@@ -392,7 +446,7 @@ still unpublished `0.0.3` changes, no separate version bump needed since
 | Real published packages | 8 of 13 packages live on the public npm registry under `@codeseedelearning/*` (5 more built and verified locally, awaiting publish: `database`, `orm`, `jwt`, `auth`, `view`; plus `core`/`router`/`http` have unpublished `0.0.3` bumps) |
 | `npx @codeseedelearning/mool new my-app --basic` | Verified working end-to-end from the real registry — zero cloning |
 | Local-CLI-via-devDependency pattern | Generated projects get `@codeseedelearning/mool` as a `devDependency`, so `npm run dev` uses the locally installed CLI — no global install needed |
-| `basic` template | The only populated template; demonstrates Config, Events, Validation, Cache, real SQLite persistence, full JWT auth (register → hash password → login → issue token → access a protected route), and view rendering (`GET /welcome`) together in `routes/web.ts`. Migrations run automatically on `mool dev`/`start` via `bootstrap/app.ts`. |
+| `basic` template | The only populated template; demonstrates Config, Events, Validation, Cache, real database persistence (SQLite by default, MySQL via `.env`), full JWT auth (register → hash password → login → issue token → access a protected route), and view rendering (`GET /welcome`) together in `routes/web.ts`. Migrations run automatically on `mool dev`/`start` via `bootstrap/app.ts`. |
 
 ---
 
@@ -429,16 +483,20 @@ These exist as directories with a `.gitkeep` and nothing else:
 ## Priority order for what's next
 
 Done, in order: publishing config/events/validation/cache → Database/ORM →
-Auth → Middleware rework → Views → **publishing everything** (all 13
-packages now live on the registry, verified end-to-end from a fresh `npx`
-install). Current focus:
+Auth → Middleware rework → Views → publishing everything → hot reload
+(`mool dev` now watches and restarts) → **MySQL support** (`mool-database`
+now supports MySQL/MariaDB via `mysql2` alongside SQLite, driver switched
+via `DB_CONNECTION`; required making `Database`/`Model` async throughout —
+a real breaking change, live-verified against an actual MySQL server).
+Current focus:
 
-1. **Fix `Request.query`, remove `mool serve`, add basic error classes (real 404 status too)** — small, cheap correctness fixes
-2. **Static file serving + CORS** — needed for almost any real app; CORS can now be a real middleware using the new pipeline
-3. **`testing` package** — an HTTP test client would make everything above easier to verify going forward
-4. **ORM query builder** — `where` only supports single-column equality today; no `orderBy`, no relationships, no multi-condition queries
-5. **Refresh tokens / logout / token revocation** — current auth is stateless JWT only; there's no way to invalidate a token before it expires
-6. **Layouts/partials for views** — `mool-view` only renders a single file today; no `<% include('partial') %>` or layout inheritance yet
+1. **Publish `mool` (0.0.2, hot reload) and `mool-database`/`mool-orm` (0.0.2, MySQL + async)** — not yet on the registry
+2. **Fix `Request.query`, remove `mool serve`, add basic error classes (real 404 status too)** — small, cheap correctness fixes
+3. **Static file serving + CORS** — needed for almost any real app; CORS can now be a real middleware using the new pipeline
+4. **`testing` package** — an HTTP test client would make everything above easier to verify going forward
+5. **ORM query builder** — `where` only supports single-column equality today; no `orderBy`, no relationships, no multi-condition queries; no schema-builder DSL, so migration DDL isn't automatically portable across SQLite/MySQL
+6. **Refresh tokens / logout / token revocation** — current auth is stateless JWT only; there's no way to invalidate a token before it expires
+7. **Layouts/partials for views** — `mool-view` only renders a single file today; no `<% include('partial') %>` or layout inheritance yet
 
 ---
 

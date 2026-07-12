@@ -9,6 +9,8 @@ import { DevCommand } from "../commands/dev-command.js";
 import { StartCommand } from "../commands/start-command.js";
 import { MigrateCommand } from "../commands/migrate-command.js";
 import { MakeMigrationCommand } from "../commands/make-migration-command.js";
+import { MigrateStatusCommand } from "../commands/migrate-status-command.js";
+import { MakeModelCommand } from "../commands/make-model-command.js";
 export class CommandProvider {
   /**
    * Register all available CLI commands.
@@ -23,5 +25,7 @@ export class CommandProvider {
     registry.register(new StartCommand());
     registry.register(new MigrateCommand());
     registry.register(new MakeMigrationCommand());
+    registry.register(new MigrateStatusCommand());
+    registry.register(new MakeModelCommand());
   }
 }

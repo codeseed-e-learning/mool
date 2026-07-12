@@ -1,55 +1,87 @@
-import { DatabaseSync } from "node:sqlite";
-import { mkdirSync } from "node:fs";
 import path from "node:path";
 
-export interface ExecuteResult {
-  lastInsertRowid: number | bigint;
-  changes: number | bigint;
+import type { DatabaseDriver, ExecuteResult } from "./driver";
+import { SqliteDriver } from "./drivers/sqlite-driver";
+import { MysqlDriver } from "./drivers/mysql-driver";
+
+export type { ExecuteResult } from "./driver";
+
+export interface DatabaseConfig {
+  connection?: "sqlite" | "mysql";
+  /** SQLite: file path (or ":memory:"). MySQL: database name. */
+  database?: string;
+  host?: string;
+  port?: number;
+  username?: string;
+  password?: string;
 }
 
 export class Database {
-  private static connection: DatabaseSync | null = null;
+  private static driver: DatabaseDriver | null = null;
 
   /**
-   * Opens the SQLite connection. Called automatically on first query if
+   * Opens the database connection. Called automatically on first query if
    * you don't call it yourself.
+   *
+   * Driver selection reads from `config`, falling back to env vars:
+   * DB_CONNECTION ("sqlite" [default] or "mysql"), and for MySQL:
+   * DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD. For SQLite,
+   * DB_DATABASE overrides the default database/database.sqlite path.
    */
-  static connect(
-    databasePath = path.resolve(process.cwd(), "database", "database.sqlite")
-  ): void {
-    if (databasePath !== ":memory:") {
-      mkdirSync(path.dirname(databasePath), { recursive: true });
+  static connect(config: DatabaseConfig = {}): void {
+    const connection = config.connection ?? process.env.DB_CONNECTION ?? "sqlite";
+
+    if (connection === "mysql") {
+      this.driver = new MysqlDriver({
+        host: config.host ?? process.env.DB_HOST,
+        port: config.port ?? (process.env.DB_PORT ? Number(process.env.DB_PORT) : undefined),
+        user: config.username ?? process.env.DB_USERNAME,
+        password: config.password ?? process.env.DB_PASSWORD,
+        database: config.database ?? process.env.DB_DATABASE,
+      });
+      return;
     }
 
-    this.connection = new DatabaseSync(databasePath);
+    const sqlitePath = config.database ?? process.env.DB_DATABASE;
+
+    this.driver = new SqliteDriver(
+      sqlitePath ? path.resolve(process.cwd(), sqlitePath) : undefined
+    );
   }
 
-  static query<T = Record<string, unknown>>(
+  static async query<T = Record<string, unknown>>(
     sql: string,
     params: unknown[] = []
-  ): T[] {
-    return this.getConnection().prepare(sql).all(...(params as [])) as T[];
+  ): Promise<T[]> {
+    return this.getDriver().query<T>(sql, params);
   }
 
-  static execute(sql: string, params: unknown[] = []): ExecuteResult {
-    const result = this.getConnection().prepare(sql).run(...(params as []));
-
-    return {
-      lastInsertRowid: result.lastInsertRowid,
-      changes: result.changes,
-    };
+  static async execute(sql: string, params: unknown[] = []): Promise<ExecuteResult> {
+    return this.getDriver().execute(sql, params);
   }
 
-  static close(): void {
-    this.connection?.close();
-    this.connection = null;
+  static async close(): Promise<void> {
+    if (this.driver) {
+      await this.driver.close();
+      this.driver = null;
+    }
   }
 
-  private static getConnection(): DatabaseSync {
-    if (!this.connection) {
+  /**
+   * Which driver is active. Useful for writing migrations that need
+   * different DDL per database (e.g. AUTOINCREMENT vs AUTO_INCREMENT) —
+   * the query/execute layer itself is portable (both drivers use `?`
+   * placeholders), but CREATE TABLE syntax generally isn't.
+   */
+  static dialect(): "sqlite" | "mysql" {
+    return this.getDriver() instanceof MysqlDriver ? "mysql" : "sqlite";
+  }
+
+  private static getDriver(): DatabaseDriver {
+    if (!this.driver) {
       this.connect();
     }
 
-    return this.connection!;
+    return this.driver!;
   }
 }

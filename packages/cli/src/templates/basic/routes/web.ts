@@ -21,14 +21,16 @@ Event.listen("user.registered", (payload) => {
   console.log("New user registered:", payload);
 });
 
-Route.get("/users", () => {
-  return User.all().map((user) => {
+Route.get("/users", async () => {
+  const users = await User.all();
+
+  return users.map((user) => {
     const { password, ...safeUser } = user;
     return safeUser;
   });
 });
 
-Route.post("/users", (request) => {
+Route.post("/users", async (request) => {
   const { valid, errors } = validate(request.body, {
     name: "required|string|min:2",
     email: "required|email",
@@ -39,7 +41,7 @@ Route.post("/users", (request) => {
     return { success: false, errors };
   }
 
-  const user = User.create({
+  const user = await User.create({
     name: request.body.name,
     email: request.body.email,
     password: hashPassword(String(request.body.password)),
@@ -53,7 +55,7 @@ Route.post("/users", (request) => {
   return { success: true, user: safeUser };
 });
 
-Route.post("/login", (request) => {
+Route.post("/login", async (request) => {
   const { valid, errors } = validate(request.body, {
     email: "required|email",
     password: "required|string",
@@ -63,7 +65,7 @@ Route.post("/login", (request) => {
     return { success: false, errors };
   }
 
-  const [user] = User.where("email", request.body.email);
+  const [user] = await User.where("email", request.body.email);
 
   if (!user || !verifyPassword(String(request.body.password), String(user.password))) {
     return { success: false, message: "Invalid credentials" };

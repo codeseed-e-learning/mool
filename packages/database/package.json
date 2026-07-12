@@ -1,7 +1,7 @@
 {
   "name": "@codeseedelearning/mool-database",
-  "version": "0.0.1",
-  "description": "SQLite database connection and migrations for the Mool framework.",
+  "version": "0.0.2",
+  "description": "SQLite and MySQL database connection and migrations for the Mool framework.",
   "type": "module",
   "main": "./src/index.ts",
   "exports": {
@@ -15,5 +15,8 @@
   },
   "engines": {
     "node": ">=22.5.0"
+  },
+  "dependencies": {
+    "mysql2": "^3.11.0"
   }
 }

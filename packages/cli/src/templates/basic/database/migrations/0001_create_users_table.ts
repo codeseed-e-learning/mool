@@ -1,19 +1,25 @@
 import { Migration, Database } from "@codeseedelearning/mool-database";
 
 export default class extends Migration {
-  up(): void {
-    Database.execute(`
+  async up(): Promise<void> {
+    const isMysql = Database.dialect() === "mysql";
+    const idColumn = isMysql
+      ? "id INT AUTO_INCREMENT PRIMARY KEY"
+      : "id INTEGER PRIMARY KEY AUTOINCREMENT";
+    const textColumn = isMysql ? "VARCHAR(255)" : "TEXT";
+
+    await Database.execute(`
       CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        email TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL,
-        created_at TEXT NOT NULL
+        ${idColumn},
+        name ${textColumn} NOT NULL,
+        email ${textColumn} NOT NULL UNIQUE,
+        password ${textColumn} NOT NULL,
+        created_at ${textColumn} NOT NULL
       )
     `);
   }
 
-  down(): void {
-    Database.execute(`DROP TABLE IF EXISTS users`);
+  async down(): Promise<void> {
+    await Database.execute(`DROP TABLE IF EXISTS users`);
   }
 }

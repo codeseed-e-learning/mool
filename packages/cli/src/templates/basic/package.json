@@ -14,8 +14,8 @@
     "@codeseedelearning/mool-events": "^0.0.1",
     "@codeseedelearning/mool-validation": "^0.0.1",
     "@codeseedelearning/mool-cache": "^0.0.1",
-    "@codeseedelearning/mool-database": "^0.0.1",
-    "@codeseedelearning/mool-orm": "^0.0.1",
+    "@codeseedelearning/mool-database": "^0.0.2",
+    "@codeseedelearning/mool-orm": "^0.0.2",
     "@codeseedelearning/mool-jwt": "^0.0.1",
     "@codeseedelearning/mool-auth": "^0.0.2",
     "@codeseedelearning/mool-view": "^0.0.1"
