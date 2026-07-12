@@ -32,7 +32,7 @@ export class Server {
       }
 
       try {
-        const result = router.resolve(request);
+        const result = await router.resolve(request);
 
         if (typeof result === "string") {
           response.send(result);

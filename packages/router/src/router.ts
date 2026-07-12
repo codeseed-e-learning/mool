@@ -5,7 +5,7 @@ import { RouteMatcher } from "./matchers/route-matcher";
 export class Router {
   private readonly matcher = new RouteMatcher();
 
-  resolve(request: Request): unknown {
+  async resolve(request: Request): Promise<unknown> {
     console.log("Method:", request.method);
     console.log("URL:", request.url);
 
@@ -32,6 +32,6 @@ export class Router {
       }
     }
 
-    return match.route.handler(request);
+    return await match.route.handler(request);
   }
 }

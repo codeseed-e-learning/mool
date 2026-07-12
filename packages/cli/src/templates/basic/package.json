@@ -8,8 +8,12 @@
     "start": "mool start"
   },
   "dependencies": {
-    "@codeseedelearning/mool-core": "^0.0.1",
-    "@codeseedelearning/mool-router": "^0.0.1"
+    "@codeseedelearning/mool-core": "^0.0.2",
+    "@codeseedelearning/mool-router": "^0.0.2",
+    "@codeseedelearning/mool-config": "^0.0.1",
+    "@codeseedelearning/mool-events": "^0.0.1",
+    "@codeseedelearning/mool-validation": "^0.0.1",
+    "@codeseedelearning/mool-cache": "^0.0.1"
   },
   "devDependencies": {
     "@codeseedelearning/mool": "^0.0.1"

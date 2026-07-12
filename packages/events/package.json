@@ -1,7 +1,7 @@
 {
-  "name": "@codeseedelearning/mool-router",
-  "version": "0.0.2",
-  "description": "Router package for the Mool framework.",
+  "name": "@codeseedelearning/mool-events",
+  "version": "0.0.1",
+  "description": "Event dispatching for the Mool framework.",
   "type": "module",
   "main": "./src/index.ts",
   "exports": {

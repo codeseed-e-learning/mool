@@ -1,5 +1,5 @@
 export default {
-  name: "Mool",
-  env: "local",
-  port: 3000,
+  name: process.env.APP_NAME ?? "Mool",
+  env: process.env.APP_ENV ?? "local",
+  port: Number(process.env.PORT) || 3000,
 };

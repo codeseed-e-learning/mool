@@ -1,21 +1,28 @@
 # Mool — Setup Guide
 
 Mool is a Laravel-inspired backend framework for Node.js, currently in early
-development. It's published as four scoped npm packages:
+development. It's split into scoped npm packages:
 
-| Package | What it is |
-|---|---|
-| `@codeseedelearning/mool` | The `mool` CLI (scaffolding, `dev`/`start`, etc.) |
-| `@codeseedelearning/mool-core` | Application/DI container, service providers |
-| `@codeseedelearning/mool-router` | Route definitions, matching, middleware pipeline |
-| `@codeseedelearning/mool-http` | Request/Response wrappers, the HTTP server |
+| Package | What it is | Version |
+|---|---|---|
+| `@codeseedelearning/mool` | The `mool` CLI (scaffolding, `dev`/`start`, etc.) | 0.0.1 |
+| `@codeseedelearning/mool-core` | Application/DI container, service providers | 0.0.2 |
+| `@codeseedelearning/mool-router` | Route definitions, matching, middleware pipeline | 0.0.2 |
+| `@codeseedelearning/mool-http` | Request/Response wrappers, the HTTP server | 0.0.2 |
+| `@codeseedelearning/mool-config` | `.env` + `config/*.ts` loading | 0.0.1 |
+| `@codeseedelearning/mool-events` | `Event.listen()` / `Event.dispatch()` pub-sub | 0.0.1 |
+| `@codeseedelearning/mool-validation` | Rule-based request validation | 0.0.1 |
+| `@codeseedelearning/mool-cache` | In-memory cache with TTL | 0.0.1 |
 
 > **Status note:** `mool` (unscoped) is already taken by an unrelated package
 > on the npm registry, so everything here is scoped under
-> `@codeseedelearning/*`. All four packages are **published** — no cloning
-> required to use Mool, see below.
+> `@codeseedelearning/*`. **All eight packages are published** — no cloning
+> required, see below. `router`/`http`/`core` are on `0.0.2` because `0.0.1`
+> had a bug (async route handlers weren't awaited); if you generated a
+> project before this fix, regenerate it or bump those three dependencies to
+> `^0.0.2` in its `package.json`.
 
-## For users: install and use (once published)
+## For users: install and use
 
 No cloning, no workspace setup — just Node.js 18+ and npm.
 
@@ -83,6 +90,36 @@ curl http://localhost:3000/health
 
 `npm run start` does the same thing (`"start": "mool start"`).
 
+### Framework features (Config, Events, Validation, Cache)
+
+The generated `bootstrap/app.ts` and `routes/web.ts` already demonstrate all
+four:
+
+```ts
+// config: config/app.ts is loaded automatically; read it anywhere via
+import { Config } from "@codeseedelearning/mool-config";
+Config.get("app.name", "Mool"); // reads process.env.APP_NAME via .env
+
+// events: fire-and-forget pub/sub
+import { Event } from "@codeseedelearning/mool-events";
+Event.listen("user.registered", (payload) => { /* ... */ });
+Event.dispatch("user.registered", { name: "Amit" });
+
+// validation: rule strings, Laravel-style
+import { validate } from "@codeseedelearning/mool-validation";
+const { valid, errors } = validate(request.body, {
+  name: "required|string|min:2",
+  email: "required|email",
+});
+
+// cache: in-memory, with TTL
+import { Cache } from "@codeseedelearning/mool-cache";
+const value = await Cache.remember("key", 10, () => expensiveWork());
+```
+
+Try the generated example routes: `POST /users` (validation + events) and
+`GET /cached-time` (cache).
+
 ## CLI command reference
 
 | Command | Description |
@@ -126,18 +163,30 @@ To remove the link later: `npm unlink -g mool`.
 ### Publishing the packages
 
 Packages must publish in dependency order (each depends on the one before
-it): `mool-http` → `mool-router` → `mool-core` → `mool`. All four already
-have `publishConfig.access: "public"` set, so a plain `npm publish` works
-for scoped packages without extra flags.
+it): `mool-http` → `mool-router` → `mool-core` → `mool`. `mool-config`,
+`mool-events`, `mool-validation`, and `mool-cache` have no cross-package
+dependencies, so they can publish any time (order doesn't matter for those
+four, and the `basic` template already depends on them once they exist on
+the registry). All packages already have `publishConfig.access: "public"`
+set, so a plain `npm publish` works for scoped packages without extra flags.
 
 ```bash
 npm login   # once, interactively — do this yourself, not via an agent
 
-cd packages/http   && npm publish
-cd ../router        && npm publish
-cd ../core          && npm publish
-cd ../cli           && npm publish
+cd packages/http        && npm publish
+cd ../router             && npm publish
+cd ../core               && npm publish
+cd ../cli                && npm publish
+cd ../config             && npm publish
+cd ../events             && npm publish
+cd ../validation         && npm publish
+cd ../cache              && npm publish
 ```
+
+Publishing requires npm's 2FA on the account. If you don't have OTP-based
+2FA (authenticator app), a Granular Access Token with the 2FA-bypass option
+enabled works for CLI publishing — see npmjs.com → your account →
+Access Tokens.
 
 Before publishing for real, verify the whole chain works exactly as an
 external user would see it — pack each package to a tarball and install
@@ -171,11 +220,15 @@ re-publishing; npm rejects re-publishing an existing version.
   the normal workflow yet, and the compiler currently reports errors across
   the codebase (missing `@types/node`, ESM extension requirements) that
   haven't been cleaned up.
-- **Most framework packages are empty stubs** — `auth`, `orm`, `database`,
-  `validation`, `cache`, `queue`, `mail`, `events`, and others exist as
-  placeholder directories only. Only `core`, `router`, `http`, and `cli` have
-  real implementations, and those are minimal (basic DI container, route
-  matching + middleware pipeline, a raw HTTP server).
+- **Most framework packages are still empty stubs** — `auth`, `orm`,
+  `database`, `queue`, `mail`, `middleware`, `filesystem`, `jwt`, `console`,
+  `contracts`, `container`, `support`, and `testing` exist as placeholder
+  directories only. `core`, `router`, `http`, `cli`, `config`, `events`,
+  `validation`, and `cache` have real (if minimal) implementations.
+- **No database/ORM.** This is the single biggest gap — no models,
+  migrations, or query builder exist yet.
+- **No real auth.** The `auth` package is empty; nothing is wired to
+  persist or verify users (there's no database to persist them to yet).
 - **`mool serve`** was an earlier attempt at a serve command; it boots a
   blank `Application` and never loads a project's routes. Use `dev`/`start`
   instead.
