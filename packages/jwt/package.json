@@ -1,0 +1,16 @@
+{
+  "name": "@codeseedelearning/mool-jwt",
+  "version": "0.0.1",
+  "description": "Minimal HS256 JWT sign/verify for the Mool framework.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "@codeseedelearning/mool-database",
+  "version": "0.0.1",
+  "description": "SQLite database connection and migrations for the Mool framework.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}

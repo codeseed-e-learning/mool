@@ -1,0 +1,19 @@
+{
+  "name": "@codeseedelearning/mool-orm",
+  "version": "0.0.1",
+  "description": "A minimal Active Record-style ORM for the Mool framework.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@codeseedelearning/mool-database": "^0.0.1"
+  }
+}

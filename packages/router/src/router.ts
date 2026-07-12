@@ -1,20 +1,12 @@
 import type { Request } from "@codeseedelearning/mool-http";
 import { Route } from "./route";
 import { RouteMatcher } from "./matchers/route-matcher";
+import type { NextFunction } from "./contracts/middleware";
 
 export class Router {
   private readonly matcher = new RouteMatcher();
 
   async resolve(request: Request): Promise<unknown> {
-    console.log("Method:", request.method);
-    console.log("URL:", request.url);
-
-    console.log(
-      Route.all().map((route) => ({
-        method: route.method,
-        path: route.path,
-      })),
-    );
     const match = this.matcher.match(request.method, request.url, Route.all());
 
     if (!match) {
@@ -23,15 +15,13 @@ export class Router {
 
     request.params = match.params;
 
-    // Execute middlewares
-    for (const middleware of match.route.middlewares) {
-      const allowed = middleware.handle(request);
+    const runHandler: NextFunction = () => match.route.handler(request);
 
-      if (!allowed) {
-        return "401 Unauthorized";
-      }
-    }
+    const pipeline = match.route.middlewares.reduceRight<NextFunction>(
+      (next, middleware) => () => middleware.handle(request, next),
+      runHandler
+    );
 
-    return await match.route.handler(request);
+    return await pipeline();
   }
 }

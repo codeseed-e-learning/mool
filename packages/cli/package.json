@@ -1,6 +1,6 @@
 {
   "name": "@codeseedelearning/mool",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "CLI for the Mool framework — scaffold and run Mool projects.",
   "type": "module",
   "bin": {
@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "tsx": "^4.22.4",
-    "@codeseedelearning/mool-core": "^0.0.1"
+    "@codeseedelearning/mool-core": "^0.0.1",
+    "@codeseedelearning/mool-database": "^0.0.1"
   }
 }

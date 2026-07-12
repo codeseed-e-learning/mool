@@ -28,4 +28,12 @@ export class Response {
 
     this.response.end(JSON.stringify(data));
   }
+
+  /**
+   * Ends the response with a raw body, without touching Content-Type —
+   * pair with .header() to set a custom one (e.g. rendered HTML views).
+   */
+  write(body: string): void {
+    this.response.end(body);
+  }
 }

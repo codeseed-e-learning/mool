@@ -1,0 +1,20 @@
+{
+  "name": "@codeseedelearning/mool-auth",
+  "version": "0.0.2",
+  "description": "Password hashing and JWT-based authentication for the Mool framework.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@codeseedelearning/mool-jwt": "^0.0.1",
+    "@codeseedelearning/mool-http": "^0.0.3"
+  }
+}

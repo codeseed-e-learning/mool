@@ -3,6 +3,7 @@ import http from "node:http";
 import { Router } from "@codeseedelearning/mool-router";
 import { Request } from "./request";
 import { Response } from "./response";
+import { HttpResponse } from "./http-response";
 
 export class Server {
   listen(port: number): void {
@@ -33,6 +34,26 @@ export class Server {
 
       try {
         const result = await router.resolve(request);
+
+        if (result instanceof HttpResponse) {
+          response.status(result.status);
+
+          if (result.contentType) {
+            response.header("Content-Type", result.contentType);
+            response.write(
+              typeof result.body === "string" ? result.body : JSON.stringify(result.body)
+            );
+            return;
+          }
+
+          if (typeof result.body === "string") {
+            response.send(result.body);
+            return;
+          }
+
+          response.json(result.body);
+          return;
+        }
 
         if (typeof result === "string") {
           response.send(result);

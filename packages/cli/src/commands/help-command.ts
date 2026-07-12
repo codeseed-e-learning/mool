@@ -20,6 +20,8 @@ Commands:
   start             Start the Mool server for the current project
   serve             Start the Mool development server
   make:controller   Create a new controller
+  migrate           Run pending database migrations
+  make:migration    Create a new database migration
 `);
   }
 }

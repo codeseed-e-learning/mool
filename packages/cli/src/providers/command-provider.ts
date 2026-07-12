@@ -7,6 +7,8 @@ import { ServeCommand } from "../commands/serve.command";
 import { MakeControllerCommand } from "../commands/make-controller-command";
 import { DevCommand } from "../commands/dev-command.js";
 import { StartCommand } from "../commands/start-command.js";
+import { MigrateCommand } from "../commands/migrate-command.js";
+import { MakeMigrationCommand } from "../commands/make-migration-command.js";
 export class CommandProvider {
   /**
    * Register all available CLI commands.
@@ -19,5 +21,7 @@ export class CommandProvider {
     registry.register(new MakeControllerCommand());
     registry.register(new DevCommand());
     registry.register(new StartCommand());
+    registry.register(new MigrateCommand());
+    registry.register(new MakeMigrationCommand());
   }
 }

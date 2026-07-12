@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title><%= title %></title>
+</head>
+<body>
+  <h1>Hello, <%= name %>!</h1>
+
+  <% if (features.length > 0) { %>
+    <ul>
+      <% for (const feature of features) { %>
+        <li><%= feature %></li>
+      <% } %>
+    </ul>
+  <% } else { %>
+    <p>No features yet.</p>
+  <% } %>
+</body>
+</html>

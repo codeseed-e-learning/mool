@@ -1,4 +1,5 @@
 import path from "node:path";
+import { randomBytes } from "node:crypto";
 
 import { FileSystem } from "../filesystem/file-system.js";
 import { TemplateRepository } from "../repositories/template-repository.js";
@@ -26,6 +27,7 @@ export class ProjectGenerator {
 
     await this.restoreGitignore(projectRoot);
     await this.setProjectName(projectRoot, projectName);
+    await this.setupEnv(projectRoot);
 
     console.log("Project created successfully.\n");
     console.log("Next steps:");
@@ -46,6 +48,38 @@ export class ProjectGenerator {
     }
 
     await this.fileSystem.rename(source, path.join(projectRoot, ".gitignore"));
+  }
+
+  /**
+   * Copies .env.example to .env (if present and .env doesn't already
+   * exist) and fills in a random APP_KEY, mirroring Laravel's
+   * `key:generate` — so auth works out of the box without a manual step.
+   */
+  private async setupEnv(projectRoot: string): Promise<void> {
+    const examplePath = path.join(projectRoot, ".env.example");
+    const envPath = path.join(projectRoot, ".env");
+
+    if (
+      !(await this.fileSystem.exists(examplePath)) ||
+      (await this.fileSystem.exists(envPath))
+    ) {
+      return;
+    }
+
+    await this.fileSystem.copyFile(examplePath, envPath);
+
+    const contents = await this.fileSystem.readFile(envPath);
+
+    if (!/^APP_KEY=\s*$/m.test(contents)) {
+      return;
+    }
+
+    const key = randomBytes(32).toString("base64url");
+
+    await this.fileSystem.writeFile(
+      envPath,
+      contents.replace(/^APP_KEY=\s*$/m, `APP_KEY=${key}`)
+    );
   }
 
   private async setProjectName(

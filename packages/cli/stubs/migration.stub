@@ -1,0 +1,15 @@
+import { Migration, Database } from "@codeseedelearning/mool-database";
+
+export default class extends Migration {
+  up(): void {
+    Database.execute(`
+      CREATE TABLE IF NOT EXISTS {{tableName}} (
+        id INTEGER PRIMARY KEY AUTOINCREMENT
+      )
+    `);
+  }
+
+  down(): void {
+    Database.execute(`DROP TABLE IF EXISTS {{tableName}}`);
+  }
+}
