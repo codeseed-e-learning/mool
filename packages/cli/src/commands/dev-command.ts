@@ -3,7 +3,7 @@ import { pathToFileURL } from "node:url";
 import { promises as fs } from "node:fs";
 
 import { Command } from "../types/command.js";
-import type { Application } from "../../../core/src/application.js";
+import type { Application } from "@codeseedelearning/mool-core";
 
 export class DevCommand implements Command {
   readonly name = "dev";

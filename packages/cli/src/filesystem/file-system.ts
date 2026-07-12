@@ -68,4 +68,11 @@ export class FileSystem {
       recursive: true,
     });
   }
+
+  /**
+   * Rename/move a file or directory.
+   */
+  async rename(source: string, destination: string): Promise<void> {
+    await fs.rename(source, destination);
+  }
 }

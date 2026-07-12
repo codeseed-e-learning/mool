@@ -1,6 +1,6 @@
 import http from "node:http";
 
-import { Router } from "../../router/src";
+import { Router } from "@codeseedelearning/mool-router";
 import { Request } from "./request";
 import { Response } from "./response";
 

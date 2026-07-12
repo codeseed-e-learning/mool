@@ -1,73 +1,43 @@
 # Mool — Setup Guide
 
 Mool is a Laravel-inspired backend framework for Node.js, currently in early
-development. This guide walks through setting up the framework repo itself
-and scaffolding a project with it.
+development. It's published as four scoped npm packages:
 
-> **Status note:** Mool is not published to npm and the `mool` package name
-> is already taken by an unrelated package on the registry. Everything below
-> works **locally**, from a clone of this repo, via `npm link`. There is no
-> `npm install mool` yet.
+| Package | What it is |
+|---|---|
+| `@codeseedelearning/mool` | The `mool` CLI (scaffolding, `dev`/`start`, etc.) |
+| `@codeseedelearning/mool-core` | Application/DI container, service providers |
+| `@codeseedelearning/mool-router` | Route definitions, matching, middleware pipeline |
+| `@codeseedelearning/mool-http` | Request/Response wrappers, the HTTP server |
 
-## Prerequisites
+> **Status note:** `mool` (unscoped) is already taken by an unrelated package
+> on the npm registry, so everything here is scoped under
+> `@codeseedelearning/*`. All four packages are **published** — no cloning
+> required to use Mool, see below.
 
-- Node.js 18+ (tested on Node 22)
-- npm 9+ (ships with recent Node; needed for workspaces support)
-- Git
+## For users: install and use (once published)
 
-## 1. Clone and install
-
-```bash
-git clone <this-repo-url> mool
-cd mool
-npm install
-```
-
-This installs dependencies at the repo root and, because the root
-`package.json` declares `workspaces: ["packages/*"]`, links the framework's
-own packages (`@mool/core`, `@mool/router`, `@mool/http`, …) into the root
-`node_modules` so they can `import`-resolve from each other and from any
-project you scaffold inside this repo.
-
-## 2. Link the `mool` CLI globally
+No cloning, no workspace setup — just Node.js 18+ and npm.
 
 ```bash
-npm link
-```
-
-This makes the `mool` command available anywhere on your machine, backed by
-[`bin/mool.js`](bin/mool.js), which runs the CLI source
-(`packages/cli/src/index.ts`) through `tsx` — no build step required yet.
-
-Verify it worked:
-
-```bash
-mool help
-```
-
-You should see the list of available commands.
-
-To remove the link later: `npm unlink -g mool`.
-
-## 3. Create a new project
-
-From inside the `mool` repo (this matters — see [Known limitations](#known-limitations)):
-
-```bash
-mool new my-app --basic
+npx @codeseedelearning/mool new my-app --basic
 cd my-app
+npm install
+npm run dev
 ```
 
+That's it. `npx` fetches and runs the CLI without a global install.
 `--basic` selects the `basic` starter template — currently the only
-populated template. Flags map to template names, so this also works:
+populated one. Omitting the flag defaults to `basic` too.
+
+If you'll be creating multiple projects, install it once instead:
 
 ```bash
-mool new my-app --template=basic
+npm install -g @codeseedelearning/mool
+mool new my-app --basic
 ```
 
-Omitting the flag defaults to `basic` as well.
-
-This generates:
+### What gets generated
 
 ```
 my-app/
@@ -80,20 +50,26 @@ my-app/
 ├── routes/web.ts         # example routes
 ├── public/
 ├── storage/
-├── package.json          # name auto-set to "my-app"
+├── package.json          # name auto-set to "my-app", depends on
+│                          # @codeseedelearning/mool-core + mool-router
 ├── tsconfig.json
 ├── .env.example
 └── .gitignore
 ```
 
-## 4. Install and run the generated project
+`npm install` inside the generated project pulls in
+`@codeseedelearning/mool-core` and `@codeseedelearning/mool-router` as real
+dependencies, plus `@codeseedelearning/mool` itself as a `devDependency` —
+that's what makes `npm run dev` (`"dev": "mool dev"`) work using the
+locally-installed CLI, with no global install required at all.
+
+### Running it
 
 ```bash
-npm install
 npm run dev
 ```
 
-`npm run dev` runs the project's own `"dev": "mool dev"` script, which:
+This:
 1. finds `bootstrap/app.ts` in the current directory,
 2. imports it (which registers the routes from `routes/web.ts`),
 3. starts an HTTP server (default port `3000`, override with `PORT=xxxx npm run dev`).
@@ -117,23 +93,84 @@ curl http://localhost:3000/health
 | `mool dev` | Load `bootstrap/app.ts` in the current directory and start the server |
 | `mool start` | Same as `dev` (no dev/prod distinction yet) |
 | `mool serve` | Starts a bare server with **no** routes loaded — a leftover from early development, not project-aware yet. Prefer `dev`/`start`. |
-| `mool make:controller <Name>` | Generate `app/controllers/<Name>.ts` from a stub |
+| `mool make:controller <Name>` | Generate `app/Controllers/<Name>.ts` from a stub |
+
+---
+
+## For maintainers: working on the framework itself
+
+This is a monorepo (`packages/*`) using npm workspaces. To hack on the
+framework rather than just use it:
+
+```bash
+git clone <this-repo-url> mool
+cd mool
+npm install
+npm link
+```
+
+`npm install` links `@codeseedelearning/mool-core`, `mool-router`, `mool-http`,
+and the `mool` CLI package to each other via workspace symlinks in the root
+`node_modules`. `npm link` makes the root's own `bin/mool.js` available
+globally as `mool`, backed by the live source in `packages/cli/src/index.ts`
+via `tsx` — no build step needed for local dev.
+
+```bash
+mool help                    # verify the link worked
+mool new my-app --basic      # scaffold a test project inside the repo
+cd my-app && npm install && npm run dev
+```
+
+To remove the link later: `npm unlink -g mool`.
+
+### Publishing the packages
+
+Packages must publish in dependency order (each depends on the one before
+it): `mool-http` → `mool-router` → `mool-core` → `mool`. All four already
+have `publishConfig.access: "public"` set, so a plain `npm publish` works
+for scoped packages without extra flags.
+
+```bash
+npm login   # once, interactively — do this yourself, not via an agent
+
+cd packages/http   && npm publish
+cd ../router        && npm publish
+cd ../core          && npm publish
+cd ../cli           && npm publish
+```
+
+Before publishing for real, verify the whole chain works exactly as an
+external user would see it — pack each package to a tarball and install
+from the tarballs in a directory *outside* this repo (so workspace symlinks
+can't paper over a broken dependency):
+
+```bash
+mkdir -p /tmp/pack-test && cd /tmp/pack-test
+npm pack /path/to/mool/packages/http
+npm pack /path/to/mool/packages/router
+npm pack /path/to/mool/packages/core
+npm pack /path/to/mool/packages/cli
+```
+
+Then create a scratch project whose `package.json` points its dependencies
+at the `.tgz` files (`"@codeseedelearning/mool-core": "file:../pack-test/codeseedelearning-mool-core-0.0.1.tgz"`,
+etc.) and run `npm install && npm run dev` there. This exact flow was used
+to verify the current setup — it works standalone, no monorepo required.
+
+Bump the `version` field in whichever package.json(s) changed before
+re-publishing; npm rejects re-publishing an existing version.
 
 ## Known limitations
 
-- **Only works inside this repo.** A generated project resolves `@mool/core`
-  and `@mool/router` by walking up from its own location to this repo's
-  `node_modules` (via the workspace symlinks from step 1). A project created
-  outside the `mool` repo won't find those packages — real portability
-  requires publishing the framework, which is blocked on the npm name
-  collision noted above.
 - **`--api` and other template names don't exist yet** — only `basic` is
   populated. `mool new` will list what's actually available if you pass an
   unknown name.
-- **No build pipeline.** Everything runs through `tsx` at dev time; `npm run
-  build` (`tsc`) exists as a script but isn't part of the normal workflow yet
-  and the compiler currently reports errors across the codebase (missing
-  `@types/node`, ESM extension requirements) that haven't been cleaned up.
+- **No build pipeline.** Everything runs through `tsx` at runtime, in both
+  the monorepo and the published packages (they ship TypeScript source, not
+  compiled JS). `npm run build` (`tsc`) exists as a script but isn't part of
+  the normal workflow yet, and the compiler currently reports errors across
+  the codebase (missing `@types/node`, ESM extension requirements) that
+  haven't been cleaned up.
 - **Most framework packages are empty stubs** — `auth`, `orm`, `database`,
   `validation`, `cache`, `queue`, `mail`, `events`, and others exist as
   placeholder directories only. Only `core`, `router`, `http`, and `cli` have
@@ -148,9 +185,10 @@ curl http://localhost:3000/health
 **`npm run dev` prints CLI help / "Unknown command" instead of starting a server**
 Your project's `package.json` is missing or wasn't found — `npm run` walks
 up to the nearest `package.json` if the current directory doesn't have one,
-which can end up running the *framework repo's* `dev` script instead of your
-project's. Make sure you're inside the generated project directory and that
-it has its own `package.json` (re-run `mool new` if it's missing).
+which can end up running a *different* `dev` script than your project's
+(e.g. the framework repo's own, if you're working inside it). Make sure
+you're inside the generated project directory and that it has its own
+`package.json` (re-run `mool new` if it's missing).
 
 **`Template "<name>" not found. Available templates: basic`**
 You passed a template flag that doesn't correspond to a populated template.
@@ -159,3 +197,10 @@ Use `--basic` (or omit the flag).
 **"Project already exists" on `mool new`**
 The target directory already exists — pick a different name or remove the
 existing directory first.
+
+**`E404` on `@codeseedelearning/mool-http` (or similar) during `npm install`**
+Two likely causes: (1) right after a fresh `npm publish`, the registry's CDN
+can take up to a minute to propagate — wait briefly and retry; or (2) if
+you're testing from a tarball rather than the registry, you forgot to also
+point the transitive `mool-http` dependency at its tarball (`mool-core`
+depends on it — see [Publishing](#publishing-the-packages)).

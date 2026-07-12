@@ -1,7 +1,6 @@
 import { Command } from "../types/command";
 
-import { Application } from "../../../core/src/application";
-import { Kernel } from "../../../core/src/kernel";
+import { Application, Kernel } from "@codeseedelearning/mool-core";
 
 export class ServeCommand implements Command {
   readonly name = "serve";

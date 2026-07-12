@@ -1,8 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { Command } from "../types/command";
 import { FileGenerator } from "../generators/file-generator";
+
+const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 
 export class MakeControllerCommand implements Command {
   readonly name = "make:controller";
@@ -22,7 +25,7 @@ export class MakeControllerCommand implements Command {
     const destination = path.join(
       process.cwd(),
       "app",
-      "controllers",
+      "Controllers",
       `${controllerName}.ts`
     );
 
@@ -32,9 +35,9 @@ export class MakeControllerCommand implements Command {
     }
 
     const stub = path.join(
-      process.cwd(),
-      "packages",
-      "cli",
+      currentDirectory,
+      "..",
+      "..",
       "stubs",
       "controller.stub"
     );
@@ -48,7 +51,7 @@ export class MakeControllerCommand implements Command {
     );
 
     console.log(
-      `✅ Controller created: app/controllers/${controllerName}.ts`
+      `✅ Controller created: app/Controllers/${controllerName}.ts`
     );
   }
 }

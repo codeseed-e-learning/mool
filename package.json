@@ -2,6 +2,7 @@
   "name": "mool",
   "version": "0.0.1",
   "description": "Laravel-inspired backend framework for JavaScript",
+  "private": true,
   "type": "module",
   "main": "dist/index.js",
   "bin": {

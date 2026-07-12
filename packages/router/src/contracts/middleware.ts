@@ -1,4 +1,4 @@
-import { Request } from "../../../http/src/request";
+import type { Request } from "@codeseedelearning/mool-http";
 
 export interface Middleware {
   handle(request: Request): boolean;

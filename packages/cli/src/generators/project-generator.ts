@@ -24,6 +24,7 @@ export class ProjectGenerator {
 
     await this.fileSystem.copyDirectory(templatePath, projectRoot);
 
+    await this.restoreGitignore(projectRoot);
     await this.setProjectName(projectRoot, projectName);
 
     console.log("Project created successfully.\n");
@@ -31,6 +32,20 @@ export class ProjectGenerator {
     console.log(`  cd ${projectName}`);
     console.log("  npm install");
     console.log("  npm run dev");
+  }
+
+  /**
+   * npm strips nested `.gitignore` files from published tarballs, so
+   * templates ship an extension-less `gitignore` file instead.
+   */
+  private async restoreGitignore(projectRoot: string): Promise<void> {
+    const source = path.join(projectRoot, "gitignore");
+
+    if (!(await this.fileSystem.exists(source))) {
+      return;
+    }
+
+    await this.fileSystem.rename(source, path.join(projectRoot, ".gitignore"));
   }
 
   private async setProjectName(

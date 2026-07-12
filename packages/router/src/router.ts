@@ -1,4 +1,4 @@
-import { Request } from "../../http/src/request";
+import type { Request } from "@codeseedelearning/mool-http";
 import { Route } from "./route";
 import { RouteMatcher } from "./matchers/route-matcher";
 

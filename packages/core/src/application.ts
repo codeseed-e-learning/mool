@@ -1,4 +1,4 @@
-import { Server } from "../../http/src";
+import { Server } from "@codeseedelearning/mool-http";
 
 import { Container, Constructor } from "./container";
 import { ProviderRepository } from "./providers/provider-repository";

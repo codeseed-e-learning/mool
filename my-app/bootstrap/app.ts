@@ -1,4 +1,4 @@
-import { Application } from "@mool/core";
+import { Application } from "@codeseedelearning/mool-core";
 
 import "../routes/web.js";
 

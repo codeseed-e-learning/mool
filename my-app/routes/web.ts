@@ -1,4 +1,4 @@
-import { Route } from "@mool/router";
+import { Route } from "@codeseedelearning/mool-router";
 
 import { HomeController } from "../app/Controllers/HomeController.js";
 

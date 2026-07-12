@@ -1,5 +1,5 @@
 {
-  "name": "@mool/core",
+  "name": "@codeseedelearning/mool-core",
   "version": "0.0.1",
   "description": "Core package for the Mool framework.",
   "type": "module",
@@ -8,8 +8,14 @@
     ".": "./src/index.ts"
   },
   "files": [
-    "dist"
+    "src"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@codeseedelearning/mool-http": "^0.0.1"
+  },
   "scripts": {
     "build": "tsc"
   }
