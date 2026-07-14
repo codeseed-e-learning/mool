@@ -1,6 +1,6 @@
 {
   "name": "@codeseedelearning/mool-http",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "HTTP package for the Mool framework.",
   "type": "module",
   "main": "./src/index.ts",

@@ -8,7 +8,7 @@
     "start": "mool start"
   },
   "dependencies": {
-    "@codeseedelearning/mool-core": "^0.0.4",
+    "@codeseedelearning/mool-core": "^0.0.5",
     "@codeseedelearning/mool-router": "^0.0.4",
     "@codeseedelearning/mool-config": "^0.0.2",
     "@codeseedelearning/mool-events": "^0.0.2",
@@ -17,14 +17,14 @@
     "@codeseedelearning/mool-database": "^0.0.4",
     "@codeseedelearning/mool-orm": "^0.0.4",
     "@codeseedelearning/mool-jwt": "^0.0.2",
-    "@codeseedelearning/mool-auth": "^0.0.3",
-    "@codeseedelearning/mool-view": "^0.0.2"
+    "@codeseedelearning/mool-auth": "^0.0.4",
+    "@codeseedelearning/mool-view": "^0.0.3"
   },
   "engines": {
     "node": ">=22.5.0"
   },
   "devDependencies": {
-    "@codeseedelearning/mool": "^0.0.4",
+    "@codeseedelearning/mool": "^0.0.5",
     "@types/node": "^22.5.0"
   }
 }

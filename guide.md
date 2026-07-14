@@ -39,10 +39,10 @@ registry).
 
 | Package | What it is | Version | Published? |
 |---|---|---|---|
-| `@codeseedelearning/mool` | The `mool` CLI (scaffolding, `dev`/`start`, `migrate`, etc.) | 0.0.4 | ✅ |
-| `@codeseedelearning/mool-core` | Application/DI container, service providers | 0.0.4 | ✅ |
+| `@codeseedelearning/mool` | The `mool` CLI (scaffolding, `dev`/`start`, `migrate`, etc.) | 0.0.5 | ✅ |
+| `@codeseedelearning/mool-core` | Application/DI container, service providers | 0.0.5 | ✅ |
 | `@codeseedelearning/mool-router` | Route definitions, matching, real `next()`-based middleware pipeline | 0.0.4 | ✅ |
-| `@codeseedelearning/mool-http` | Request/Response wrappers, `HttpResponse`, the HTTP server | 0.0.4 | ✅ |
+| `@codeseedelearning/mool-http` | Request/Response wrappers, `HttpResponse`, the HTTP server, static file serving from `public/` | 0.0.5 | ✅ |
 | `@codeseedelearning/mool-config` | `.env` + `config/*.ts` loading | 0.0.2 | ✅ |
 | `@codeseedelearning/mool-events` | `Event.listen()` / `Event.dispatch()` pub-sub | 0.0.2 | ✅ |
 | `@codeseedelearning/mool-validation` | Rule-based request validation | 0.0.2 | ✅ |
@@ -50,8 +50,8 @@ registry).
 | `@codeseedelearning/mool-database` | SQLite (`node:sqlite`) + MySQL (`mysql2`) connections, migrations, transactions | 0.0.4 | ✅ |
 | `@codeseedelearning/mool-orm` | Active Record `Model` with a real chainable query builder | 0.0.4 | ✅ |
 | `@codeseedelearning/mool-jwt` | Zero-dependency HS256 JWT sign/verify | 0.0.2 | ✅ |
-| `@codeseedelearning/mool-auth` | Password hashing (scrypt) + JWT auth (`createToken`, `AuthMiddleware`) | 0.0.3 | ✅ |
-| `@codeseedelearning/mool-view` | Minimal zero-dependency view engine (`<%= %>`/`<% %>` tags), layouts + reusable components (`layout()`/`component()`), `View.render()`, `html()` | 0.0.2 | ✅ |
+| `@codeseedelearning/mool-auth` | Password hashing (scrypt) + JWT auth (`createToken`, `AuthMiddleware`) | 0.0.4 | ✅ |
+| `@codeseedelearning/mool-view` | Minimal zero-dependency view engine (`<%= %>`/`<% %>` tags), layouts + reusable components (`layout()`/`component()`), `View.render()`, `html()` | 0.0.3 | ✅ |
 
 Everything is live on npm — a fresh `npx @codeseedelearning/mool new` pulls
 every package straight from the registry, no local/unpublished state.
@@ -142,7 +142,7 @@ my-app/
 ├── resources/
 │   └── views/welcome.html
 ├── routes/web.ts           # your routes live here
-├── public/
+├── public/                 # static assets — served as-is, e.g. public/css/nav.css -> /css/nav.css
 ├── storage/
 ├── package.json
 ├── tsconfig.json
@@ -666,6 +666,33 @@ See `resources/views/welcome.html`, `resources/views/about.html`,
 `resources/views/layouts/app.html`, and `resources/views/components/` in
 this project for a working example — both pages share one layout and two
 components (`PageHeader`, `PageFooter`).
+
+### Static assets: CSS, JS, images (`public/`)
+
+Anything placed under `public/` is served as-is at the matching URL
+path — put a stylesheet at `public/css/nav.css` and it's reachable at
+`/css/nav.css`, no route needed:
+
+```html
+<link rel="stylesheet" href="/css/nav.css">
+<script src="/js/app.js"></script>
+<img src="/images/logo.png" alt="Logo">
+```
+
+This is handled by `Server` (`@codeseedelearning/mool-http`) itself, ahead
+of routing: on every `GET`/`HEAD` request it first checks whether the URL
+maps to a real file under `public/` (resolved relative to `process.cwd()`
+— your project root) and streams it back with a `Content-Type` inferred
+from the file extension (`.css`, `.js`, `.json`, `.svg`, `.png`, `.woff2`,
+etc. — anything unrecognized falls back to `application/octet-stream`).
+Only if no static file matches does the request fall through to
+`Router.resolve()`, so a route and a file under `public/` can never both
+claim the same path — the static file always wins. Requests that try to
+escape `public/` (e.g. `/../package.json`) are rejected the same as a
+missing file.
+
+No setup needed — every generated project already has a `public/`
+directory ready to drop files into.
 
 ---
 
@@ -1317,14 +1344,15 @@ in practice.
 | `Router.resolve(request)` | Matches method+path, builds the middleware pipeline, awaits and returns its result. |
 | 404 | Returns the literal string `"404 Not Found"` when no route matches — doesn't set a real HTTP status code (known gap). |
 
-### HTTP — `@codeseedelearning/mool-http@0.0.4` (published)
+### HTTP — `@codeseedelearning/mool-http@0.0.5` (published)
 
 | Feature | Details |
 |---|---|
 | `Request` | Wraps Node's `IncomingMessage`: `.method`, `.url`, `.headers`, `.params`, `.body` (JSON-parsed, falls back to `{}` on parse failure), and `.state` — a generic bag middleware use to pass data forward, e.g. `request.state.user = ...`. |
 | `Response` | `.status(code)`, `.header(name, value)`, `.send(string)` (text/plain), `.json(data)` — all chainable except the terminal two. |
 | `HttpResponse` | Return `new HttpResponse(status, body)` from a route handler or middleware to control the actual HTTP status code — plain return values always send `200`. This is what makes `AuthMiddleware`'s 401 a real 401. |
-| `Server` | Raw `node:http` server: reads the full request body, JSON-parses it, calls the router; catches thrown errors into a generic `500 {"success":false,"message":"Internal Server Error"}`. |
+| `Server` | Raw `node:http` server: on `GET`/`HEAD`, first checks for a matching file under `public/` and streams it back with an extension-based `Content-Type` (see [Static assets](#static-assets-css-js-images-public) in Step 8); otherwise reads the full request body, JSON-parses it, calls the router; catches thrown errors into a generic `500 {"success":false,"message":"Internal Server Error"}`. |
+| `Response.raw` | Escape hatch to the underlying `node:http` `ServerResponse` — used internally to pipe static file streams. |
 
 ### Config — `@codeseedelearning/mool-config` (published)
 

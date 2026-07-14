@@ -36,4 +36,12 @@ export class Response {
   write(body: string): void {
     this.response.end(body);
   }
+
+  /**
+   * The underlying Node ServerResponse — for cases the wrapper doesn't
+   * cover, e.g. piping a file stream (static file serving).
+   */
+  get raw(): ServerResponse {
+    return this.response;
+  }
 }
