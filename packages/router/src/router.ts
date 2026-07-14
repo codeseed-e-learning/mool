@@ -1,7 +1,7 @@
 import type { Request } from "@codeseedelearning/mool-http";
-import { Route } from "./route";
-import { RouteMatcher } from "./matchers/route-matcher";
-import type { NextFunction } from "./contracts/middleware";
+import { Route } from "./route.js";
+import { RouteMatcher } from "./matchers/route-matcher.js";
+import type { NextFunction } from "./contracts/middleware.js";
 
 export class Router {
   private readonly matcher = new RouteMatcher();

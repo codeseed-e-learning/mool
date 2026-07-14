@@ -1,6 +1,6 @@
 import { Database } from "@codeseedelearning/mool-database";
 
-import type { Model } from "./model";
+import type { Model } from "./model.js";
 
 const ALLOWED_OPERATORS = ["=", "!=", "<>", ">", "<", ">=", "<=", "LIKE", "NOT LIKE"];
 

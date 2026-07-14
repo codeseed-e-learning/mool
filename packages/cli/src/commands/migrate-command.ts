@@ -1,4 +1,4 @@
-import { Command } from "../types/command";
+import { Command } from "../types/command.js";
 import { runMigrations } from "@codeseedelearning/mool-database";
 
 export class MigrateCommand implements Command {

@@ -1,8 +1,8 @@
 import { Server } from "@codeseedelearning/mool-http";
 
-import { Container, Constructor } from "./container";
-import { ProviderRepository } from "./providers/provider-repository";
-import { Provider } from "./providers/provider";
+import { Container, Constructor } from "./container.js";
+import { ProviderRepository } from "./providers/provider-repository.js";
+import { Provider } from "./providers/provider.js";
 
 export class Application {
   public readonly container: Container;

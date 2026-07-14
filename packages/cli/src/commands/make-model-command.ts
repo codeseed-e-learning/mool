@@ -2,8 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { Command } from "../types/command";
-import { FileGenerator } from "../generators/file-generator";
+import { Command } from "../types/command.js";
+import { FileGenerator } from "../generators/file-generator.js";
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 

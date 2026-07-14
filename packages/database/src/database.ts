@@ -1,10 +1,10 @@
 import path from "node:path";
 
-import type { DatabaseDriver, ExecuteResult } from "./driver";
-import { SqliteDriver } from "./drivers/sqlite-driver";
-import { MysqlDriver } from "./drivers/mysql-driver";
+import type { DatabaseDriver, ExecuteResult } from "./driver.js";
+import { SqliteDriver } from "./drivers/sqlite-driver.js";
+import { MysqlDriver } from "./drivers/mysql-driver.js";
 
-export type { ExecuteResult } from "./driver";
+export type { ExecuteResult } from "./driver.js";
 
 export interface DatabaseConfig {
   connection?: "sqlite" | "mysql";
@@ -58,6 +58,23 @@ export class Database {
 
   static async execute(sql: string, params: unknown[] = []): Promise<ExecuteResult> {
     return this.getDriver().execute(sql, params);
+  }
+
+  /**
+   * Runs `callback` inside a transaction — commits if it resolves, rolls
+   * back and rethrows if it throws. Every `Database.query()`/`.execute()`
+   * call made during `callback` (including through `Model`/`QueryBuilder`,
+   * since they go through this same static class) automatically
+   * participates in the transaction — no connection/client object to pass
+   * around.
+   *
+   * Only one transaction runs at a time per process: a second concurrent
+   * `transaction()` call waits for the first to finish rather than
+   * interleaving. That's a deliberate simplicity tradeoff, not a bug — see
+   * the "Transactions" section of guide.md.
+   */
+  static async transaction<T>(callback: () => Promise<T>): Promise<T> {
+    return this.getDriver().transaction(callback);
   }
 
   static async close(): Promise<void> {

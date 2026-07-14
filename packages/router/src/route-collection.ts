@@ -1,4 +1,4 @@
-import { RouteDefinition } from "./route-definition";
+import { RouteDefinition } from "./route-definition.js";
 
 export class RouteCollection {
   private readonly routes: RouteDefinition[] = [];

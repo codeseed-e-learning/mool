@@ -6,5 +6,6 @@ export interface ExecuteResult {
 export interface DatabaseDriver {
   query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]>;
   execute(sql: string, params?: unknown[]): Promise<ExecuteResult>;
+  transaction<T>(callback: () => Promise<T>): Promise<T>;
   close(): Promise<void>;
 }

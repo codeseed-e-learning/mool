@@ -1,5 +1,5 @@
-import { RouteHandler } from "./contracts/route-handler";
-import { Middleware } from "./contracts/middleware";
+import { RouteHandler } from "./contracts/route-handler.js";
+import { Middleware } from "./contracts/middleware.js";
 
 export class RouteDefinition {
   constructor(

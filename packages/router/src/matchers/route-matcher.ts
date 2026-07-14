@@ -1,5 +1,5 @@
-import { RouteDefinition } from "../route-definition";
-import { RouteMatch } from "../types";
+import { RouteDefinition } from "../route-definition.js";
+import { RouteMatch } from "../types.js";
 
 export class RouteMatcher {
   match(

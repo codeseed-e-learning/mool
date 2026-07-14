@@ -87,7 +87,16 @@ Route.get("/welcome", () => {
   const rendered = View.render("welcome", {
     title: "Welcome to Mool",
     name: "developer",
-    features: ["Routing", "Validation", "SQLite ORM", "JWT auth", "Views"],
+    features: [
+      { icon: "🚦", title: "Routing & Middleware", description: "Path params, real async next() chaining." },
+      { icon: "🗄️", title: "Database & ORM", description: "SQLite or MySQL, plus a chainable query builder." },
+      { icon: "🔒", title: "JWT Auth", description: "Password hashing and token middleware, built in." },
+      { icon: "🖼️", title: "Views", description: "A minimal, zero-dependency template engine." },
+      { icon: "✅", title: "Validation", description: "Laravel-style rule strings for request data." },
+      { icon: "⚡", title: "Cache & Events", description: "In-memory TTL cache, and a pub/sub event bus." },
+      { icon: "🔁", title: "Transactions", description: "Wrap multi-write operations so they commit or roll back together." },
+      { icon: "🛠️", title: "CLI", description: "make:model, make:controller, migrate, and hot-reloading dev server." },
+    ],
   });
 
   return html(rendered);

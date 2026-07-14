@@ -1,4 +1,4 @@
-import { Command } from "../types/command";
+import { Command } from "../types/command.js";
 
 export class HelpCommand implements Command {
   readonly name = "help";
@@ -21,6 +21,8 @@ Commands:
   serve             Start the Mool development server
   make:controller   Create a new controller
   make:model        Create a new ORM model
+  make:component    Create a new reusable view component
+  make:layout       Create a new view layout
   migrate           Run pending database migrations
   migrate:status    Show which migrations have run and which are pending
   make:migration    Create a new database migration

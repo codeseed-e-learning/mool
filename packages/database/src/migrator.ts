@@ -2,8 +2,8 @@ import { readdirSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { Database } from "./database";
-import type { Migration } from "./migration";
+import { Database } from "./database.js";
+import type { Migration } from "./migration.js";
 
 type MigrationConstructor = new () => Migration;
 

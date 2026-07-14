@@ -1,7 +1,7 @@
-import { Command } from "../types/command";
-import { FileSystem } from "../filesystem/file-system";
-import { TemplateRepository } from "../repositories/template-repository";
-import { ProjectGenerator } from "../generators/project-generator";
+import { Command } from "../types/command.js";
+import { FileSystem } from "../filesystem/file-system.js";
+import { TemplateRepository } from "../repositories/template-repository.js";
+import { ProjectGenerator } from "../generators/project-generator.js";
 
 export class NewCommand implements Command {
   readonly name = "new";

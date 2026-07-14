@@ -1,6 +1,6 @@
-import { RouteCollection } from "./route-collection";
-import { RouteDefinition } from "./route-definition";
-import { RouteHandler } from "./contracts/route-handler";
+import { RouteCollection } from "./route-collection.js";
+import { RouteDefinition } from "./route-definition.js";
+import { RouteHandler } from "./contracts/route-handler.js";
 
 export class Route {
   private static readonly routes = new RouteCollection();

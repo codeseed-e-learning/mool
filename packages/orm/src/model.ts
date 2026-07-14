@@ -1,7 +1,7 @@
 import { Database } from "@codeseedelearning/mool-database";
 
-import { QueryBuilder, type PaginationResult } from "./query-builder";
-import { ModelNotFoundError } from "./errors";
+import { QueryBuilder, type PaginationResult } from "./query-builder.js";
+import { ModelNotFoundError } from "./errors.js";
 
 type Ctor<T extends Model> = {
   table: string;

@@ -1,7 +1,7 @@
 import { HttpResponse, type Request } from "@codeseedelearning/mool-http";
 
-import { getBearerToken } from "./bearer";
-import { verifyToken } from "./token";
+import { getBearerToken } from "./bearer.js";
+import { verifyToken } from "./token.js";
 
 type NextFunction = () => unknown | Promise<unknown>;
 

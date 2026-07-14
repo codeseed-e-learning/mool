@@ -1,6 +1,6 @@
 {
   "name": "@codeseedelearning/mool-database",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "SQLite and MySQL database connection and migrations for the Mool framework.",
   "type": "module",
   "main": "./src/index.ts",

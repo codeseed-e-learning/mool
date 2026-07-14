@@ -1,9 +1,9 @@
 import http from "node:http";
 
 import { Router } from "@codeseedelearning/mool-router";
-import { Request } from "./request";
-import { Response } from "./response";
-import { HttpResponse } from "./http-response";
+import { Request } from "./request.js";
+import { Response } from "./response.js";
+import { HttpResponse } from "./http-response.js";
 
 export class Server {
   listen(port: number): void {

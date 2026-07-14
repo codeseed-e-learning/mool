@@ -1,3 +1,3 @@
-export * from "./model";
-export * from "./query-builder";
-export * from "./errors";
+export * from "./model.js";
+export * from "./query-builder.js";
+export * from "./errors.js";

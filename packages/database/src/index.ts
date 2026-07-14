@@ -1,3 +1,3 @@
-export * from "./database";
-export * from "./migration";
-export * from "./migrator";
+export * from "./database.js";
+export * from "./migration.js";
+export * from "./migrator.js";

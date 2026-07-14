@@ -1,4 +1,4 @@
-import { Command } from "../types/command";
+import { Command } from "../types/command.js";
 
 import { Application, Kernel } from "@codeseedelearning/mool-core";
 

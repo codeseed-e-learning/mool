@@ -1,6 +1,6 @@
-import { CommandRegistry } from "./command-registry";
-import { Parser } from "./parser";
-import { CommandProvider } from "./providers/command-provider";
+import { CommandRegistry } from "./command-registry.js";
+import { Parser } from "./parser.js";
+import { CommandProvider } from "./providers/command-provider.js";
 
 export class CLI {
   private readonly registry: CommandRegistry;
