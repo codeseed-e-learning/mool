@@ -1,6 +1,6 @@
 {
   "name": "@codeseedelearning/mool-cache",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "In-memory cache for the Mool framework.",
   "type": "module",
   "main": "./src/index.ts",

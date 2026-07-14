@@ -1,6 +1,6 @@
 {
   "name": "@codeseedelearning/mool-config",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Config and .env loading for the Mool framework.",
   "type": "module",
   "main": "./src/index.ts",

@@ -39,19 +39,19 @@ registry).
 
 | Package | What it is | Version | Published? |
 |---|---|---|---|
-| `@codeseedelearning/mool` | The `mool` CLI (scaffolding, `dev`/`start`, `migrate`, etc.) | 0.0.3 | ✅ |
-| `@codeseedelearning/mool-core` | Application/DI container, service providers | 0.0.3 | ✅ |
-| `@codeseedelearning/mool-router` | Route definitions, matching, real `next()`-based middleware pipeline | 0.0.3 | ✅ |
-| `@codeseedelearning/mool-http` | Request/Response wrappers, `HttpResponse`, the HTTP server | 0.0.3 | ✅ |
-| `@codeseedelearning/mool-config` | `.env` + `config/*.ts` loading | 0.0.1 | ✅ |
-| `@codeseedelearning/mool-events` | `Event.listen()` / `Event.dispatch()` pub-sub | 0.0.1 | ✅ |
-| `@codeseedelearning/mool-validation` | Rule-based request validation | 0.0.1 | ✅ |
-| `@codeseedelearning/mool-cache` | In-memory cache with TTL | 0.0.1 | ✅ |
-| `@codeseedelearning/mool-database` | SQLite (`node:sqlite`) + MySQL (`mysql2`) connections, migrations, transactions | 0.0.3 | ✅ |
-| `@codeseedelearning/mool-orm` | Active Record `Model` with a real chainable query builder | 0.0.3 | ✅ |
-| `@codeseedelearning/mool-jwt` | Zero-dependency HS256 JWT sign/verify | 0.0.1 | ✅ |
-| `@codeseedelearning/mool-auth` | Password hashing (scrypt) + JWT auth (`createToken`, `AuthMiddleware`) | 0.0.2 | ✅ |
-| `@codeseedelearning/mool-view` | Minimal zero-dependency view engine (`<%= %>`/`<% %>` tags), layouts + reusable components (`layout()`/`component()`), `View.render()`, `html()` | 0.0.1 | ✅ |
+| `@codeseedelearning/mool` | The `mool` CLI (scaffolding, `dev`/`start`, `migrate`, etc.) | 0.0.4 | ✅ |
+| `@codeseedelearning/mool-core` | Application/DI container, service providers | 0.0.4 | ✅ |
+| `@codeseedelearning/mool-router` | Route definitions, matching, real `next()`-based middleware pipeline | 0.0.4 | ✅ |
+| `@codeseedelearning/mool-http` | Request/Response wrappers, `HttpResponse`, the HTTP server | 0.0.4 | ✅ |
+| `@codeseedelearning/mool-config` | `.env` + `config/*.ts` loading | 0.0.2 | ✅ |
+| `@codeseedelearning/mool-events` | `Event.listen()` / `Event.dispatch()` pub-sub | 0.0.2 | ✅ |
+| `@codeseedelearning/mool-validation` | Rule-based request validation | 0.0.2 | ✅ |
+| `@codeseedelearning/mool-cache` | In-memory cache with TTL | 0.0.2 | ✅ |
+| `@codeseedelearning/mool-database` | SQLite (`node:sqlite`) + MySQL (`mysql2`) connections, migrations, transactions | 0.0.4 | ✅ |
+| `@codeseedelearning/mool-orm` | Active Record `Model` with a real chainable query builder | 0.0.4 | ✅ |
+| `@codeseedelearning/mool-jwt` | Zero-dependency HS256 JWT sign/verify | 0.0.2 | ✅ |
+| `@codeseedelearning/mool-auth` | Password hashing (scrypt) + JWT auth (`createToken`, `AuthMiddleware`) | 0.0.3 | ✅ |
+| `@codeseedelearning/mool-view` | Minimal zero-dependency view engine (`<%= %>`/`<% %>` tags), layouts + reusable components (`layout()`/`component()`), `View.render()`, `html()` | 0.0.2 | ✅ |
 
 Everything is live on npm — a fresh `npx @codeseedelearning/mool new` pulls
 every package straight from the registry, no local/unpublished state.
@@ -1306,7 +1306,7 @@ routes/database/config are all wired via plain static imports instead.
 The container/provider system is real and working, just currently unused
 in practice.
 
-### Router — `@codeseedelearning/mool-router@0.0.3` (published)
+### Router — `@codeseedelearning/mool-router@0.0.4` (published)
 
 | Feature | Details |
 |---|---|
@@ -1317,7 +1317,7 @@ in practice.
 | `Router.resolve(request)` | Matches method+path, builds the middleware pipeline, awaits and returns its result. |
 | 404 | Returns the literal string `"404 Not Found"` when no route matches — doesn't set a real HTTP status code (known gap). |
 
-### HTTP — `@codeseedelearning/mool-http@0.0.3` (published)
+### HTTP — `@codeseedelearning/mool-http@0.0.4` (published)
 
 | Feature | Details |
 |---|---|
@@ -1362,7 +1362,7 @@ in practice.
 Single-process, in-memory only — doesn't survive a restart, no
 Redis/file/Memcached drivers.
 
-### Database — `@codeseedelearning/mool-database@0.0.3` (published)
+### Database — `@codeseedelearning/mool-database@0.0.4` (published)
 
 Two drivers behind one API — SQLite (`node:sqlite`, zero external
 dependency, default) and MySQL/MariaDB (via `mysql2`, the one genuine
@@ -1384,7 +1384,7 @@ them; raw DDL generally isn't (see `Database.dialect()`).
 Every method is `async` — real network I/O on the MySQL side means
 there's no way to represent that behind a sync API.
 
-### ORM — `@codeseedelearning/mool-orm@0.0.3` (published)
+### ORM — `@codeseedelearning/mool-orm@0.0.4` (published)
 
 An Active Record-style layer on top of `mool-database`, with a real
 chainable query builder underneath the `Model` static methods. See the
