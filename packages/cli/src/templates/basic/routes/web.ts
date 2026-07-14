@@ -89,7 +89,7 @@ Route.get("/welcome", () => {
     name: "developer",
     features: [
       { icon: "🚦", title: "Routing & Middleware", description: "Path params, real async next() chaining." },
-      { icon: "🗄️", title: "Database & ORM", description: "SQLite or MySQL, plus a chainable query builder." },
+      { icon: "🗄️", title: "Database & ORM", description: "MySQL, plus a chainable query builder." },
       { icon: "🔒", title: "JWT Auth", description: "Password hashing and token middleware, built in." },
       { icon: "🖼️", title: "Views", description: "A minimal, zero-dependency template engine." },
       { icon: "✅", title: "Validation", description: "Laravel-style rule strings for request data." },

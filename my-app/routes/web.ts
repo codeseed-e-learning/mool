@@ -88,7 +88,7 @@ Route.get("/welcome", () => {
   const rendered = View.render("welcome", {
     title: "Welcome to Mool",
     name: "developer",
-    features: ["Routing", "Validation", "SQLite ORM", "JWT auth", "Views"],
+    features: ["Routing", "Validation", "MySQL ORM", "JWT auth", "Views"],
   });
 
   return html(rendered);

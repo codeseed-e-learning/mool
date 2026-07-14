@@ -20,14 +20,13 @@ and how to work on the framework itself. Nothing else to read.
 8. [Step 6: Create your first controller](#step-6-create-your-first-controller)
 9. [Step 7: Create your first Model](#step-7-create-your-first-model)
 10. [Step 8: Create your first view](#step-8-create-your-first-view)
-11. [Step 9: Switch to MySQL](#step-9-switch-to-mysql)
-12. [More framework features, with usage examples](#more-framework-features-with-usage-examples)
-13. [ORM Reference: Everything about Models](#orm-reference-everything-about-models)
-14. [CLI command reference](#cli-command-reference)
-15. [Complete feature inventory](#complete-feature-inventory)
-16. [Roadmap — what's next](#roadmap--whats-next)
-17. [For maintainers: working on the framework itself](#for-maintainers-working-on-the-framework-itself)
-18. [Troubleshooting](#troubleshooting)
+11. [More framework features, with usage examples](#more-framework-features-with-usage-examples)
+12. [ORM Reference: Everything about Models](#orm-reference-everything-about-models)
+13. [CLI command reference](#cli-command-reference)
+14. [Complete feature inventory](#complete-feature-inventory)
+15. [Roadmap — what's next](#roadmap--whats-next)
+16. [For maintainers: working on the framework itself](#for-maintainers-working-on-the-framework-itself)
+17. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -39,7 +38,7 @@ registry).
 
 | Package | What it is | Version | Published? |
 |---|---|---|---|
-| `@codeseedelearning/mool` | The `mool` CLI (scaffolding, `dev`/`start`, `migrate`, etc.) | 0.0.5 | ✅ |
+| `@codeseedelearning/mool` | The `mool` CLI (scaffolding, `dev`/`start`, `migrate`, etc.) | 0.0.6 | ✅ |
 | `@codeseedelearning/mool-core` | Application/DI container, service providers | 0.0.5 | ✅ |
 | `@codeseedelearning/mool-router` | Route definitions, matching, real `next()`-based middleware pipeline | 0.0.4 | ✅ |
 | `@codeseedelearning/mool-http` | Request/Response wrappers, `HttpResponse`, the HTTP server, static file serving from `public/` | 0.0.5 | ✅ |
@@ -47,8 +46,8 @@ registry).
 | `@codeseedelearning/mool-events` | `Event.listen()` / `Event.dispatch()` pub-sub | 0.0.2 | ✅ |
 | `@codeseedelearning/mool-validation` | Rule-based request validation | 0.0.2 | ✅ |
 | `@codeseedelearning/mool-cache` | In-memory cache with TTL | 0.0.2 | ✅ |
-| `@codeseedelearning/mool-database` | SQLite (`node:sqlite`) + MySQL (`mysql2`) connections, migrations, transactions | 0.0.4 | ✅ |
-| `@codeseedelearning/mool-orm` | Active Record `Model` with a real chainable query builder | 0.0.4 | ✅ |
+| `@codeseedelearning/mool-database` | MySQL (`mysql2`) connections, migrations, transactions | 0.0.5 | ✅ |
+| `@codeseedelearning/mool-orm` | Active Record `Model` with a real chainable query builder | 0.0.5 | ✅ |
 | `@codeseedelearning/mool-jwt` | Zero-dependency HS256 JWT sign/verify | 0.0.2 | ✅ |
 | `@codeseedelearning/mool-auth` | Password hashing (scrypt) + JWT auth (`createToken`, `AuthMiddleware`) | 0.0.4 | ✅ |
 | `@codeseedelearning/mool-view` | Minimal zero-dependency view engine (`<%= %>`/`<% %>` tags), layouts + reusable components (`layout()`/`component()`), `View.render()`, `html()` | 0.0.3 | ✅ |
@@ -62,20 +61,23 @@ every package straight from the registry, no local/unpublished state.
 
 Before you start, make sure you have:
 
-- **Node.js 22.5 or newer** — required because the database layer uses
-  Node's built-in `node:sqlite` module.
-  Check your version:
-  ```bash
-  node -v
-  ```
-  If it's older than `v22.5.0`, install a newer version from
-  [nodejs.org](https://nodejs.org) or via a version manager (`nvm`, `fnm`,
-  etc.) before continuing.
-- **npm** (ships with Node, no separate install needed).
-- That's it — no database server, no global CLI install required, no
-  cloning any repository. Projects use SQLite (a file on disk) by
-  default, so there's nothing extra to run. A MySQL server is only needed
-  if you choose to switch to it later — see [Step 9](#step-9-switch-to-mysql).
+- **Node.js** (any reasonably recent LTS) and **npm** (ships with Node,
+  no separate install needed).
+- **A MySQL (or MariaDB) server reachable from your machine.** MySQL is
+  the only database Mool supports — there's no bundled/zero-config
+  option, so migrations and anything touching `Database`/`Model` need a
+  real server before they'll work. Any of these work:
+  - Already have one installed locally (MySQL, MariaDB, XAMPP, etc.) —
+    just make sure it's running.
+  - Docker, if you don't want to install anything system-wide:
+    ```bash
+    docker run --name mool-mysql -e MYSQL_ROOT_PASSWORD=secret -p 3306:3306 -d mysql:8
+    ```
+  - A managed/hosted MySQL instance (PlanetScale, RDS, etc.) — just use
+    its connection details instead of `127.0.0.1` when you configure
+    `.env` in [Step 3](#step-3-install-dependencies).
+- No global CLI install required, no cloning any repository — `npx` pulls
+  everything on demand.
 
 ---
 
@@ -156,6 +158,25 @@ with a real, randomly-generated `APP_KEY` filled in — this is the secret
 used to sign JWTs for authentication, so login/auth works immediately with
 no manual setup.
 
+**Point it at your MySQL server.** `.env`'s `DB_*` values default to
+`127.0.0.1:3306`, database `mool`, user `root`, no password — edit them
+to match your server if that's not accurate:
+
+```bash
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=mool
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+Then create that database (Mool creates tables via migrations, but not
+the database itself):
+
+```sql
+CREATE DATABASE mool;
+```
+
 ---
 
 ## Step 3: Install dependencies
@@ -229,7 +250,7 @@ curl http://localhost:3000/health
 # Home route (reads config/app.ts)
 curl http://localhost:3000/
 
-# Register a user (real SQLite persistence + password hashing)
+# Register a user (real MySQL persistence + password hashing)
 curl -X POST http://localhost:3000/users \
   -H "Content-Type: application/json" \
   -d '{"name":"Amit","email":"amit@example.com","password":"secret123"}'
@@ -346,27 +367,19 @@ mool make:migration create_posts_table
 ```
 
 (Your actual filename will have today's timestamp instead.) Open it and
-fill in the columns — the generated stub already includes the
-dialect-aware `id` column pattern (see [Step 9](#step-9-switch-to-mysql)
-for why that branching exists):
+fill in the columns:
 
 ```ts
 import { Migration, Database } from "@codeseedelearning/mool-database";
 
 export default class extends Migration {
   async up(): Promise<void> {
-    const isMysql = Database.dialect() === "mysql";
-    const idColumn = isMysql
-      ? "id INT AUTO_INCREMENT PRIMARY KEY"
-      : "id INTEGER PRIMARY KEY AUTOINCREMENT";
-    const textColumn = isMysql ? "VARCHAR(255)" : "TEXT";
-
     await Database.execute(`
       CREATE TABLE IF NOT EXISTS posts (
-        ${idColumn},
-        title ${textColumn} NOT NULL,
-        body ${textColumn} NOT NULL,
-        created_at ${textColumn} NOT NULL
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        body VARCHAR(255) NOT NULL,
+        created_at VARCHAR(255) NOT NULL
       )
     `);
   }
@@ -477,7 +490,7 @@ curl http://localhost:3000/posts
 ```
 
 Restart the server (or let the watcher do it) and run the second `curl`
-again — the post is still there. It's a real row in `database/database.sqlite`,
+again — the post is still there. It's a real row in your MySQL database,
 not in-memory state that resets on restart.
 
 ### Model quick reference
@@ -696,121 +709,9 @@ directory ready to drop files into.
 
 ---
 
-## Step 9: Switch to MySQL
-
-By default, every Mool project uses **SQLite** — a file on disk, zero
-setup, nothing to install or run separately. That's why everything above
-just worked. If you'd rather use a real MySQL (or MariaDB) server instead,
-here's how.
-
-**What changes under the hood:** `mool-database` ships two drivers behind
-one API — `Database.query()`/`Database.execute()` work identically either
-way. Which driver is active is controlled entirely by the `DB_CONNECTION`
-env var; you don't touch any code to switch.
-
-### 9.1 Have a MySQL server running
-
-You need a MySQL (or MariaDB) server reachable from your machine. Any of
-these work:
-
-- Already have one installed locally (MySQL, MariaDB, XAMPP, etc.) — just
-  make sure it's running.
-- Docker, if you don't want to install anything system-wide:
-  ```bash
-  docker run --name mool-mysql -e MYSQL_ROOT_PASSWORD=secret -p 3306:3306 -d mysql:8
-  ```
-- A managed/hosted MySQL instance (PlanetScale, RDS, etc.) — just use its
-  connection details below instead of `127.0.0.1`.
-
-### 9.2 Create a database
-
-Using whatever client you have (the `mysql` CLI, a GUI like TablePlus/DBeaver,
-phpMyAdmin, etc.):
-
-```sql
-CREATE DATABASE my_app;
-```
-
-### 9.3 Point your project at it
-
-Edit `.env` (not `.env.example`) in your project root:
-
-```bash
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=my_app
-DB_USERNAME=root
-DB_PASSWORD=secret
-```
-
-That's the only change needed — no code edits, no reinstalling packages.
-
-### 9.4 Run it
-
-```bash
-npm run dev
-```
-
-Migrations run automatically on boot, same as with SQLite — you should see
-`Migrated: 0001_create_users_table.ts` again, this time creating the table
-in your MySQL database instead of a `.sqlite` file.
-
-Verify with the same commands from Step 5 (`POST /users`, `POST /login`,
-etc.) — they behave identically; the driver switch is completely invisible
-at the `Model`/route level.
-
-### A real limitation to know about: migrations aren't automatically portable
-
-`Database.query()`/`.execute()` work the same on both drivers (both use
-`?` placeholders), but raw `CREATE TABLE` SQL is **not** identical between
-SQLite and MySQL — e.g. SQLite's `INTEGER PRIMARY KEY AUTOINCREMENT` vs
-MySQL's `INT AUTO_INCREMENT PRIMARY KEY`. There's no schema-builder DSL
-that abstracts this away (the ORM is deliberately minimal), so migrations
-need to branch on the dialect themselves. The generated `0001_create_users_table.ts`
-migration (and the stub `mool make:migration` generates) already do this
-for you — copy the pattern for any migration you write:
-
-```ts
-import { Migration, Database } from "@codeseedelearning/mool-database";
-
-export default class extends Migration {
-  async up(): Promise<void> {
-    const isMysql = Database.dialect() === "mysql";
-    const idColumn = isMysql
-      ? "id INT AUTO_INCREMENT PRIMARY KEY"
-      : "id INTEGER PRIMARY KEY AUTOINCREMENT";
-    const textColumn = isMysql ? "VARCHAR(255)" : "TEXT";
-
-    await Database.execute(`
-      CREATE TABLE IF NOT EXISTS posts (
-        ${idColumn},
-        title ${textColumn} NOT NULL
-      )
-    `);
-  }
-
-  async down(): Promise<void> {
-    await Database.execute(`DROP TABLE IF EXISTS posts`);
-  }
-}
-```
-
-If you only ever plan to use one database (just SQLite, or just MySQL),
-you can skip the `isMysql` branching entirely and hardcode whichever
-syntax you need — the branching is only necessary if you want the same
-migration file to work against either driver.
-
-**Switching back to SQLite** later is just as easy: set
-`DB_CONNECTION=sqlite` in `.env` (or delete the line — it's the default)
-and restart. Your MySQL data stays in MySQL untouched; a fresh
-`database/database.sqlite` gets created and migrated from scratch.
-
----
-
 ## More framework features, with usage examples
 
-Steps 1–9 covered routing, the database/ORM, auth, and views in depth.
+Steps 1–8 covered routing, the database/ORM, auth, and views in depth.
 The rest of the framework in one place:
 
 ```ts
@@ -1144,8 +1045,7 @@ pagination, and simple comparisons. It still doesn't do relationships,
 joins, aggregates other than `count()`, or `AND`/`OR` groups with mixed
 precedence (e.g. `WHERE a AND (b OR c)`). For any of those, use
 `Database.query()`/`Database.execute()` directly — same functions
-migrations use, same `?` placeholder syntax, portable between SQLite and
-MySQL:
+migrations use, same `?` placeholder syntax:
 
 **Joins:**
 
@@ -1235,19 +1135,13 @@ No connection or client object to thread through your code — every
 participates in the same transaction, because they all go through the
 same underlying connection.
 
-**How it's implemented per driver** — this is the one place where the two
-drivers' underlying shapes (single connection vs. pool) actually leak
-into the implementation:
-- **SQLite**: there's only one physical connection ever, so `BEGIN`/
-  `COMMIT`/`ROLLBACK` just run on it directly. An internal promise-chain
-  lock serializes concurrent `transaction()` calls so two `BEGIN`s can't
-  land on top of each other.
-- **MySQL**: a single connection is checked out of the pool
-  (`pool.getConnection()`) and pinned for the duration of the callback —
-  `query()`/`execute()` check for a pinned connection first and use it
-  instead of the pool when one is set. Released back to the pool in a
-  `finally` regardless of commit/rollback. Same promise-chain lock as
-  SQLite, so only one transaction holds the pinned connection at a time.
+**How it's implemented:** a single connection is checked out of the
+MySQL pool (`pool.getConnection()`) and pinned for the duration of the
+callback — `query()`/`execute()` check for a pinned connection first and
+use it instead of the pool when one is set. Released back to the pool in
+a `finally` regardless of commit/rollback. An internal promise-chain lock
+serializes concurrent `transaction()` calls so only one holds the pinned
+connection at a time.
 
 **One tradeoff to know about:** only one transaction runs at a time, per
 process. If two requests call `Database.transaction()` at the same
@@ -1268,9 +1162,8 @@ visible), not a bug.
 
 Every table a Model reads from needs a migration that actually creates
 it — the ORM doesn't create or alter tables itself. See
-[Step 7.1](#71-create-a-migration-for-the-table) for the walkthrough, and
-[Step 9](#step-9-switch-to-mysql) for why migrations branch on
-`Database.dialect()`. Quick command reference:
+[Step 7.1](#71-create-a-migration-for-the-table) for the walkthrough.
+Quick command reference:
 
 | Command | What it does |
 |---|---|
@@ -1390,21 +1283,17 @@ in practice.
 Single-process, in-memory only — doesn't survive a restart, no
 Redis/file/Memcached drivers.
 
-### Database — `@codeseedelearning/mool-database@0.0.4` (published)
+### Database — `@codeseedelearning/mool-database@0.0.5` (published)
 
-Two drivers behind one API — SQLite (`node:sqlite`, zero external
-dependency, default) and MySQL/MariaDB (via `mysql2`, the one genuine
-external dependency anywhere in this framework). Both drivers use `?`
-positional placeholders, so `query`/`execute` calls are portable between
-them; raw DDL generally isn't (see `Database.dialect()`).
+MySQL/MariaDB only, via `mysql2` (the one genuine external dependency
+anywhere in this framework), behind a small `?`-placeholder query API.
 
 | Feature | Details |
 |---|---|
-| `Database.connect(config?)` | Picks a driver: `config.connection` → `DB_CONNECTION` env var → `"sqlite"` default. Lazily called on first query if you never call it yourself. |
+| `Database.connect(config?)` | Opens a MySQL connection pool from `config`, falling back to env vars (`DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`). Lazily called on first query if you never call it yourself. |
 | `Database.query(sql, params?)` | `async` — runs a `SELECT`, returns rows as plain objects. |
 | `Database.execute(sql, params?)` | `async` — runs an `INSERT`/`UPDATE`/`DELETE`, returns `{ lastInsertRowid, changes }`. |
-| `Database.close()` | `async` — closes the active connection/pool. |
-| `Database.dialect()` | Returns `"sqlite"` or `"mysql"` — for migrations that need different DDL per database. |
+| `Database.close()` | `async` — closes the active connection pool. |
 | `Database.transaction(callback)` | `async` — commits if `callback` resolves, rolls back and rethrows if it throws. See [Transactions](#transactions) above. |
 | `Migration` (abstract class) | `up()` / `down()`, `void \| Promise<void>` — write (`await`ed) SQL against `Database.execute()`. |
 | `runMigrations(dir?)` | `async`. Creates a `migrations` tracking table if missing, `await`s every not-yet-applied file in filename order. |
@@ -1412,7 +1301,7 @@ them; raw DDL generally isn't (see `Database.dialect()`).
 Every method is `async` — real network I/O on the MySQL side means
 there's no way to represent that behind a sync API.
 
-### ORM — `@codeseedelearning/mool-orm@0.0.4` (published)
+### ORM — `@codeseedelearning/mool-orm@0.0.5` (published)
 
 An Active Record-style layer on top of `mool-database`, with a real
 chainable query builder underneath the `Model` static methods. See the
@@ -1683,10 +1572,6 @@ cd ../jwt                       && npm publish
 cd ../auth                       && npm publish
 ```
 
-`mool-database` requires Node ≥22.5 (uses the built-in `node:sqlite`
-module) — declared in its `engines` field, but npm doesn't enforce
-`engines` by default, so it's worth calling out explicitly.
-
 Publishing requires npm's 2FA on the account. If you don't have OTP-based
 2FA (authenticator app), a Granular Access Token with the 2FA-bypass
 option enabled works for CLI publishing — see npmjs.com → your account →
@@ -1736,13 +1621,6 @@ you're inside the generated project directory and that it has its own
 Something else is already using port 3000 (maybe a previous `mool dev`
 that didn't shut down cleanly). Either stop that process, or run on a
 different port: `PORT=4000 npm run dev`.
-
-**`node -v` shows a version older than 22.5**
-Update Node.js first — the database layer requires Node's built-in
-`node:sqlite`, which isn't available on older versions. (This applies even
-if you're using MySQL — SQLite is still the framework's default and
-`node:sqlite` is a required dependency of `mool-database` regardless of
-which driver you actually use.)
 
 **`Template "<name>" not found. Available templates: basic`**
 You passed a template flag that doesn't correspond to a populated

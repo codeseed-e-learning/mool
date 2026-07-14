@@ -9,7 +9,7 @@ export class HomeController {
       name: "shri. Amit Kasabe 2",
       features: [
         { icon: "🚦", title: "Routing & Middleware", description: "Path params, real async next() chaining." },
-        { icon: "🗄️", title: "Database & ORM", description: "SQLite or MySQL, plus a chainable query builder." },
+        { icon: "🗄️", title: "Database & ORM", description: "MySQL, plus a chainable query builder." },
         { icon: "🔒", title: "JWT Auth", description: "Password hashing and token middleware, built in." },
         { icon: "🖼️", title: "Views", description: "Layouts and reusable components, React-props style." },
         { icon: "✅", title: "Validation", description: "Laravel-style rule strings for request data." },

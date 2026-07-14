@@ -14,14 +14,9 @@ export interface MigrationStatus {
 }
 
 async function ensureMigrationsTable(): Promise<void> {
-  const idColumn =
-    Database.dialect() === "mysql"
-      ? "id INT AUTO_INCREMENT PRIMARY KEY"
-      : "id INTEGER PRIMARY KEY AUTOINCREMENT";
-
   await Database.execute(`
     CREATE TABLE IF NOT EXISTS migrations (
-      ${idColumn},
+      id INT AUTO_INCREMENT PRIMARY KEY,
       name VARCHAR(255) NOT NULL UNIQUE,
       run_at VARCHAR(255) NOT NULL
     )

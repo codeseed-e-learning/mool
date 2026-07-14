@@ -1,5 +1,6 @@
 import { Command } from "../types/command.js";
-import { runMigrations } from "@codeseedelearning/mool-database";
+import { loadEnv, Config } from "@codeseedelearning/mool-config";
+import { Database, runMigrations } from "@codeseedelearning/mool-database";
 
 export class MigrateCommand implements Command {
   readonly name = "migrate";
@@ -7,8 +8,17 @@ export class MigrateCommand implements Command {
   readonly description = "Run pending database migrations";
 
   async execute(): Promise<void> {
-    await runMigrations();
+    loadEnv();
+    await Config.load();
 
-    console.log("✅ Migrations complete.");
+    try {
+      await runMigrations();
+
+      console.log("✅ Migrations complete.");
+    } finally {
+      // Without this, the open MySQL connection pool keeps the process
+      // alive and `mool migrate` never returns to the shell.
+      await Database.close();
+    }
   }
 }
