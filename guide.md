@@ -38,7 +38,7 @@ registry).
 
 | Package | What it is | Version | Published? |
 |---|---|---|---|
-| `@codeseedelearning/mool` | The `mool` CLI (scaffolding, `dev`/`start`, `migrate`, etc.) | 0.0.6 | ✅ |
+| `@codeseedelearning/mool` | The `mool` CLI (scaffolding, `dev`/`start`, `migrate`, etc.) | 0.0.7 | ✅ |
 | `@codeseedelearning/mool-core` | Application/DI container, service providers | 0.0.5 | ✅ |
 | `@codeseedelearning/mool-router` | Route definitions, matching, real `next()`-based middleware pipeline | 0.0.4 | ✅ |
 | `@codeseedelearning/mool-http` | Request/Response wrappers, `HttpResponse`, the HTTP server, static file serving from `public/` | 0.0.5 | ✅ |
@@ -192,10 +192,12 @@ This pulls in the actual framework packages your project depends on —
 `devDependency`. That last part is what lets `npm run dev` work using the
 locally-installed CLI, with no global install required at all.
 
-You should see something like:
+You should see something like (the exact count includes `mysql2`'s own
+transitive dependencies, so it'll drift over time — don't worry if it
+doesn't match exactly):
 
 ```
-added 19 packages, and audited 20 packages in Xs
+added 29 packages, and audited 30 packages in Xs
 found 0 vulnerabilities
 ```
 
@@ -675,10 +677,10 @@ mool make:layout app          # resources/views/layouts/app.html
 mool make:component Card      # resources/views/components/Card.html
 ```
 
-See `resources/views/welcome.html`, `resources/views/about.html`,
-`resources/views/layouts/app.html`, and `resources/views/components/` in
-this project for a working example — both pages share one layout and two
-components (`PageHeader`, `PageFooter`).
+See `resources/views/welcome.html`, `resources/views/layouts/app.html`,
+and `resources/views/components/` in a freshly generated project for a
+working example — `welcome.html` already uses the layout plus the
+`PageHeader`/`PageFooter` components shipped with the `basic` template.
 
 ### Static assets: CSS, JS, images (`public/`)
 
@@ -1185,6 +1187,8 @@ Quick command reference:
 | `mool serve` | Starts a bare server with **no** routes loaded — a leftover from early development, not project-aware. Prefer `dev`/`start`. |
 | `mool make:controller <Name>` | Generate `app/Controllers/<Name>.ts` from a stub |
 | `mool make:model <Name>` | Generate `app/Models/<Name>.ts` from a stub, with the table name guessed via a small built-in pluralizer (`Post` → `posts`, `Category` → `categories`, `BlogPost` → `blog_posts`) — not a full inflector, irregular plurals need a manual fix |
+| `mool make:layout <name>` | Generate `resources/views/layouts/<name>.html` from a stub |
+| `mool make:component <Name>` | Generate `resources/views/components/<Name>.html` from a stub |
 | `mool migrate` | Run every pending file in `database/migrations/`, tracked in a `migrations` table |
 | `mool migrate:status` | List every migration with ✅ Ran (+ timestamp) or ⏳ Pending — runs nothing, safe to call any time |
 | `mool make:migration <name>` | Generate a timestamped migration file (table name inferred from `create_x_table`-style names) |
@@ -1205,6 +1209,8 @@ end to end (not a stub).
 | `mool start` | Same underlying command as `dev`, but runs once (no watch). |
 | `mool make:controller <Name>` | Generates from a stub file, resolved relative to the CLI package itself (works standalone, not just in the monorepo). |
 | `mool make:model <Name>` | Generates a `Model` subclass with `static table` pre-filled via a small built-in pluralizer. Rejects if the file already exists. |
+| `mool make:layout <name>` | Generates `resources/views/layouts/<name>.html` from a stub. Rejects if the file already exists. |
+| `mool make:component <Name>` | Generates `resources/views/components/<Name>.html` from a stub. Rejects if the file already exists. |
 | `mool migrate` | Runs every pending file in `database/migrations/` in filename order, tracking what's applied in a `migrations` table so re-runs are a no-op. |
 | `mool migrate:status` | Creates the tracking table if missing (applies nothing), lists every migration file with ✅/⏳ and the applied timestamp, plus a pending count. |
 | `mool make:migration <name>` | Generates a timestamp-prefixed migration file, deriving the table name from `create_x_table`-style names. |
@@ -1425,8 +1431,6 @@ These exist as empty directories (`.gitkeep` only) or don't exist at all:
 - **Error handling** — any thrown error becomes a generic
   `500 Internal Server Error`; no custom exception classes, no per-route
   error handlers.
-- **No static file serving** — `public/` is scaffolded but the server
-  never serves anything from it.
 - **No CORS support.**
 - **Auth is JWT-only and stateless** — no refresh tokens, no
   logout/revocation mechanism.
@@ -1450,8 +1454,11 @@ Ranked by actual risk if shipped as-is, not by feature completeness:
    production.
 4. **A testing framework** — without one, every change risks silent
    regressions that only surface from manual `curl` testing.
-5. **Static file serving + CORS** — needed for almost any real app; CORS
-   can now be a real middleware using the router's pipeline.
+5. **✅ Static file serving** — done (`public/` is served by `Server`
+   itself, see [Static assets](#static-assets-css-js-images-public) in
+   Step 8). **CORS is still a live gap** — needed for almost any real
+   app calling this from a browser on a different origin; can be a real
+   middleware using the router's pipeline.
 6. **Authorization (Gates/Policies).**
 7. **Refresh tokens / logout / token revocation** — current auth is
    stateless JWT only; no way to invalidate a token before it expires.

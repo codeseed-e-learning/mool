@@ -1,4 +1,10 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { Command } from "../types/command.js";
+
+const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 
 export class VersionCommand implements Command {
   readonly name = "version";
@@ -6,6 +12,9 @@ export class VersionCommand implements Command {
   readonly description = "Show framework version";
 
   execute(): void {
-    console.log("Mool v0.0.1");
+    const packageJsonPath = path.join(currentDirectory, "..", "..", "package.json");
+    const { version } = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
+
+    console.log(`Mool v${version}`);
   }
 }
