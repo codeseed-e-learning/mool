@@ -1,0 +1,27 @@
+{
+  "name": "portfolio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "mool dev",
+    "start": "mool start"
+  },
+  "dependencies": {
+    "@codeseedelearning/mool-core": "^0.0.5",
+    "@codeseedelearning/mool-router": "^0.0.4",
+    "@codeseedelearning/mool-config": "^0.0.2",
+    "@codeseedelearning/mool-events": "^0.0.2",
+    "@codeseedelearning/mool-validation": "^0.0.2",
+    "@codeseedelearning/mool-cache": "^0.0.2",
+    "@codeseedelearning/mool-database": "^0.0.5",
+    "@codeseedelearning/mool-orm": "^0.0.5",
+    "@codeseedelearning/mool-jwt": "^0.0.2",
+    "@codeseedelearning/mool-auth": "^0.0.4",
+    "@codeseedelearning/mool-view": "^0.0.3"
+  },
+  "devDependencies": {
+    "@codeseedelearning/mool": "^0.0.6",
+    "@types/node": "^22.5.0"
+  }
+}

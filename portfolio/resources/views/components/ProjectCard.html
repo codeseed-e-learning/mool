@@ -1,0 +1,8 @@
+<div class="project-card">
+  <h3><%= title %></h3>
+  <p><%= description %></p>
+  <p class="tech-stack"><%= tech_stack %></p>
+  <% if (repo_url) { %>
+    <a href="<%= repo_url %>" target="_blank" rel="noopener">View repo</a>
+  <% } %>
+</div>

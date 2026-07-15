@@ -1,0 +1,26 @@
+<% layout("layouts/app", { title }) %>
+
+<header>
+  <h1><%= name %></h1>
+  <p>Backend developer — projects built with Mool.</p>
+</header>
+
+<link rel="stylesheet" href="/css/portfolio.css">
+
+<section>
+  <h2>Projects</h2>
+
+  <% if (projects.length > 0) { %>
+    <div class="projects-grid">
+      <% for (const project of projects) { %>
+        <% component("ProjectCard", project); %>
+      <% } %>
+    </div>
+  <% } else { %>
+    <p>No projects yet.</p>
+  <% } %>
+</section>
+
+<footer>
+  <p>Built with <a href="https://www.npmjs.com/package/@codeseedelearning/mool">Mool</a>.</p>
+</footer>

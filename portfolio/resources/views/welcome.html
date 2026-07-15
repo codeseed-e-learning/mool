@@ -1,0 +1,46 @@
+<% layout("layouts/app", { title }) %>
+<% component("PageHeader", { name }); %>
+
+<h2>What's included</h2>
+<div class="grid">
+  <% for (const feature of features) { %>
+    <div class="card">
+      <span class="icon"><%= feature.icon %></span>
+      <div class="title"><%= feature.title %></div>
+      <div class="description"><%= feature.description %></div>
+    </div>
+  <% } %>
+</div>
+
+<div class="try-it">
+  <h2>Try the built-in example routes</h2>
+  <div class="routes">
+    <div class="route">
+      <span class="method">GET</span>
+      <span class="path">/users</span>
+      <span class="desc">List registered users</span>
+    </div>
+    <div class="route">
+      <span class="method">POST</span>
+      <span class="path">/users</span>
+      <span class="desc">Register (validation + password hashing)</span>
+    </div>
+    <div class="route">
+      <span class="method">POST</span>
+      <span class="path">/login</span>
+      <span class="desc">Log in and receive a JWT</span>
+    </div>
+    <div class="route">
+      <span class="method">GET</span>
+      <span class="path">/profile</span>
+      <span class="desc">Protected — requires a Bearer token</span>
+    </div>
+    <div class="route">
+      <span class="method">GET</span>
+      <span class="path">/cached-time</span>
+      <span class="desc">Cache.remember() in action</span>
+    </div>
+  </div>
+</div>
+
+<% component("PageFooter"); %>
