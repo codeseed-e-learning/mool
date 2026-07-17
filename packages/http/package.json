@@ -1,6 +1,6 @@
 {
   "name": "@codeseedelearning/mool-http",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "HTTP package for the Mool framework.",
   "type": "module",
   "main": "./src/index.ts",
@@ -14,6 +14,6 @@
     "access": "public"
   },
   "dependencies": {
-    "@codeseedelearning/mool-router": "^0.0.4"
+    "@codeseedelearning/mool-router": "^0.0.5"
   }
 }

@@ -38,10 +38,10 @@ registry).
 
 | Package | What it is | Version | Published? |
 |---|---|---|---|
-| `@codeseedelearning/mool` | The `mool` CLI (scaffolding, `dev`/`start`, `migrate`, etc.) | 0.0.7 | ✅ |
-| `@codeseedelearning/mool-core` | Application/DI container, service providers | 0.0.5 | ✅ |
-| `@codeseedelearning/mool-router` | Route definitions, matching, real `next()`-based middleware pipeline | 0.0.4 | ✅ |
-| `@codeseedelearning/mool-http` | Request/Response wrappers, `HttpResponse`, the HTTP server, static file serving from `public/` | 0.0.5 | ✅ |
+| `@codeseedelearning/mool` | The `mool` CLI (scaffolding, `dev`/`start`, `migrate`, etc.) | 0.0.8 | ✅ |
+| `@codeseedelearning/mool-core` | Application/DI container, service providers | 0.0.6 | ✅ |
+| `@codeseedelearning/mool-router` | Route definitions, matching, prefix/middleware groups, real `next()`-based middleware pipeline | 0.0.5 | ✅ |
+| `@codeseedelearning/mool-http` | Request/Response wrappers, `HttpResponse`, the HTTP server, static file serving from `public/` | 0.0.6 | ✅ |
 | `@codeseedelearning/mool-config` | `.env` + `config/*.ts` loading | 0.0.2 | ✅ |
 | `@codeseedelearning/mool-events` | `Event.listen()` / `Event.dispatch()` pub-sub | 0.0.2 | ✅ |
 | `@codeseedelearning/mool-validation` | Rule-based request validation | 0.0.2 | ✅ |
@@ -49,8 +49,8 @@ registry).
 | `@codeseedelearning/mool-database` | MySQL (`mysql2`) connections, migrations, transactions | 0.0.5 | ✅ |
 | `@codeseedelearning/mool-orm` | Active Record `Model` with a real chainable query builder | 0.0.5 | ✅ |
 | `@codeseedelearning/mool-jwt` | Zero-dependency HS256 JWT sign/verify | 0.0.2 | ✅ |
-| `@codeseedelearning/mool-auth` | Password hashing (scrypt) + JWT auth (`createToken`, `AuthMiddleware`) | 0.0.4 | ✅ |
-| `@codeseedelearning/mool-view` | Minimal zero-dependency view engine (`<%= %>`/`<% %>` tags), layouts + reusable components (`layout()`/`component()`), `View.render()`, `html()` | 0.0.3 | ✅ |
+| `@codeseedelearning/mool-auth` | Password hashing (scrypt) + JWT auth (`createToken`, `AuthMiddleware`) | 0.0.5 | ✅ |
+| `@codeseedelearning/mool-view` | Minimal zero-dependency view engine (`<%= %>`/`<% %>` tags), layouts + reusable components (`layout()`/`component()`), `View.render()`, `html()` | 0.0.4 | ✅ |
 
 Everything is live on npm — a fresh `npx @codeseedelearning/mool new` pulls
 every package straight from the registry, no local/unpublished state.
@@ -769,6 +769,69 @@ Migrations (`database/migrations/*.ts`) run automatically every time you
 `mool dev`/`start` — no separate step needed for local dev, though `mool
 migrate` also exists for running them explicitly (e.g. in a deploy step).
 
+### Route groups: prefix and middleware
+
+`Route.group(options, callback)` applies a shared path prefix and/or shared
+middleware to every route registered inside `callback` — the same idea as
+Laravel's `Route::group()`:
+
+```ts
+import { Route } from "@codeseedelearning/mool-router";
+import { AuthMiddleware } from "@codeseedelearning/mool-auth";
+
+Route.group({ prefix: "/api", middleware: [new AuthMiddleware()] }, () => {
+  Route.get("/users", UserController.index);   // GET /api/users, AuthMiddleware applied
+  Route.post("/users", UserController.store);  // POST /api/users, AuthMiddleware applied
+});
+
+// Routes outside the group are unaffected:
+Route.get("/health", () => "OK"); // GET /health — no prefix, no middleware
+```
+
+Both `prefix` and `middleware` are optional — use either on its own:
+
+```ts
+// Prefix only, no middleware:
+Route.group({ prefix: "/admin" }, () => {
+  Route.get("/stats", AdminController.stats); // GET /admin/stats
+});
+
+// Middleware only, no prefix:
+Route.group({ middleware: [new AuthMiddleware()] }, () => {
+  Route.get("/profile", ProfileController.show);
+  Route.get("/settings", SettingsController.show);
+});
+```
+
+**Groups nest** — a nested group's `prefix` is appended to its parent's, and
+its `middleware` is appended after its parent's:
+
+```ts
+Route.group({ prefix: "/api", middleware: [new AuthMiddleware()] }, () => {
+  Route.group({ prefix: "/admin", middleware: [new AdminOnlyMiddleware()] }, () => {
+    // GET /api/admin/stats — both AuthMiddleware and AdminOnlyMiddleware
+    // apply, AuthMiddleware first (outer group runs first).
+    Route.get("/stats", AdminController.stats);
+  });
+});
+```
+
+Middleware order follows the same onion model as the `.middleware()`
+chaining shown above: group middleware runs outermost (first in, last
+out); per-route `.middleware()` —
+still available on the `RouteDefinition` that `Route.get/post/put/delete`
+returns, group or no group — runs closest to the handler:
+
+```ts
+Route.group({ prefix: "/api", middleware: [new AuthMiddleware()] }, () => {
+  // AuthMiddleware runs first, RateLimitMiddleware second, then the handler.
+  Route.get("/reports", ReportController.index).middleware(new RateLimitMiddleware());
+});
+```
+
+`prefix` accepts a leading slash or not (`"api"` and `"/api"` both work) and
+tolerates a trailing slash — normalized the same way either form.
+
 ---
 
 ## ORM Reference: Everything about Models
@@ -1232,18 +1295,19 @@ routes/database/config are all wired via plain static imports instead.
 The container/provider system is real and working, just currently unused
 in practice.
 
-### Router — `@codeseedelearning/mool-router@0.0.4` (published)
+### Router — `@codeseedelearning/mool-router@0.0.5` (published)
 
 | Feature | Details |
 |---|---|
 | `Route.get/post/put/delete(path, handler)` | Static registration into a shared `RouteCollection`. |
 | Path param matching | `:id`-style segments, e.g. `/users/:id` → `request.params.id`. |
 | `.middleware(m)` chaining | Attaches one or more `Middleware` to a route definition, in call order. |
-| **Real middleware pipeline** | `Middleware.handle(request, next)` — an onion-style chain built with `reduceRight`. Each middleware calls `next()` to continue (and gets the downstream result back), or returns its own value to short-circuit. Fully async. Mutate `request` before calling `next()` to pass data forward. |
+| `Route.group(options, callback)` | Groups routes under a shared `prefix` and/or shared `middleware`, applied to every `Route.get/post/put/delete` call made inside `callback`. Nestable — see [Route groups](#route-groups-prefix-and-middleware) below. |
+| **Real middleware pipeline** | `Middleware.handle(request, next)` — an onion-style chain built with `reduceRight`. Each middleware calls `next()` to continue (and gets the downstream result back), or returns its own value to short-circuit. Fully async. Mutate `request` before calling `next()` to pass data forward. Group middleware runs outermost, per-route `.middleware()` closest to the handler. |
 | `Router.resolve(request)` | Matches method+path, builds the middleware pipeline, awaits and returns its result. |
 | 404 | Returns the literal string `"404 Not Found"` when no route matches — doesn't set a real HTTP status code (known gap). |
 
-### HTTP — `@codeseedelearning/mool-http@0.0.5` (published)
+### HTTP — `@codeseedelearning/mool-http@0.0.6` (published)
 
 | Feature | Details |
 |---|---|
@@ -1350,7 +1414,7 @@ external JWT library).
 Only one algorithm exists on purpose — no RS256/alg-negotiation, so
 there's no "alg: none" class of vulnerability to worry about.
 
-### Auth — `@codeseedelearning/mool-auth@0.0.2` (published)
+### Auth — `@codeseedelearning/mool-auth@0.0.5` (published)
 
 JWT-based only (no sessions, no OAuth) — password hashing + token
 issuance/verification, built on `mool-jwt`.
