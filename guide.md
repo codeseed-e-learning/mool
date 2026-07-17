@@ -51,9 +51,14 @@ registry).
 | `@codeseedelearning/mool-jwt` | Zero-dependency HS256 JWT sign/verify | 0.0.2 | ✅ |
 | `@codeseedelearning/mool-auth` | Password hashing (scrypt) + JWT auth (`createToken`, `AuthMiddleware`) | 0.0.5 | ✅ |
 | `@codeseedelearning/mool-view` | Minimal zero-dependency view engine (`<%= %>`/`<% %>` tags), layouts + reusable components (`layout()`/`component()`), `View.render()`, `html()` | 0.0.4 | ✅ |
+| `@codeseedelearning/mool-mail` | Zero-dependency SMTP mail sending (`Mail.send()`), config (including the `from` address) driven entirely by `.env` | 0.0.1 | ❌ not yet |
 
-Everything is live on npm — a fresh `npx @codeseedelearning/mool new` pulls
-every package straight from the registry, no local/unpublished state.
+Everything but `mool-mail` is live on npm — a fresh `npx @codeseedelearning/mool
+new` pulls every other package straight from the registry, no
+local/unpublished state. `mool-mail` is built and tested (see
+[Mail](#mail-sending-emails) below) but not yet published, so it isn't
+wired into `basic` template's `package.json`/`.env.example` yet — install
+it separately once it ships.
 
 ---
 
@@ -832,6 +837,102 @@ Route.group({ prefix: "/api", middleware: [new AuthMiddleware()] }, () => {
 `prefix` accepts a leading slash or not (`"api"` and `"/api"` both work) and
 tolerates a trailing slash — normalized the same way either form.
 
+### Mail: sending emails
+
+**Not yet published** (see the [Packages](#packages) table) — this section
+documents what's built and tested, ready for once `@codeseedelearning/mool-mail`
+ships.
+
+`Mail.send()` sends a real email over SMTP — no external mail library,
+just `node:net`/`node:tls` speaking the protocol directly (the same
+zero-dependency approach as `mool-jwt`'s hand-rolled JWT signing):
+
+```ts
+import { Mail } from "@codeseedelearning/mool-mail";
+
+await Mail.send({
+  to: "amit@example.com",
+  subject: "Welcome!",
+  html: "<p>Thanks for signing up.</p>",
+});
+```
+
+**The `from` address is configured, not hardcoded per call** — exactly
+like `Database.connect()` reads `DB_*`, `Mail.connect()` reads these from
+`.env` the first time you call `Mail.send()`, so every route that sends
+mail shares the same sender by default without repeating it:
+
+```bash
+MAIL_HOST=smtp.example.com
+MAIL_PORT=587
+MAIL_ENCRYPTION=starttls        # "tls" | "starttls" (default) | "none"
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_FROM_ADDRESS=noreply@example.com
+MAIL_FROM_NAME=My App           # optional — formats "My App <noreply@example.com>"
+```
+
+Call `Mail.connect(config)` yourself first if you'd rather configure it
+in code (e.g. from `config/mail.ts` via `Config`) than purely from env
+vars — same optional-override pattern `Database.connect()` uses:
+
+```ts
+Mail.connect({
+  host: "smtp.example.com",
+  port: 587,
+  encryption: "starttls",
+  username: "apikey",
+  password: process.env.SENDGRID_API_KEY,
+  fromAddress: "noreply@example.com",
+  fromName: "My App",
+});
+```
+
+**Overriding `from` per send** — pass `from` in the message to use a
+different address just for that one email, bypassing the configured
+default:
+
+```ts
+await Mail.send({
+  to: "amit@example.com",
+  from: "billing@example.com",
+  subject: "Your invoice",
+  html: "<p>...</p>",
+});
+```
+
+**`to`/`cc` accept a single address or an array**, and at least one of
+`html`/`text` is required — passing both sends a real
+`multipart/alternative` message (an HTML client renders `html`, a
+plain-text client falls back to `text`):
+
+```ts
+await Mail.send({
+  to: ["amit@example.com", "team@example.com"],
+  cc: "manager@example.com",
+  subject: "Weekly report",
+  text: "Plain-text fallback for clients that don't render HTML.",
+  html: "<h1>Weekly report</h1><p>...</p>",
+});
+```
+
+**What it actually speaks:** `EHLO`, `STARTTLS` (upgrading a plain
+connection when `MAIL_ENCRYPTION=starttls`, the default — connects
+already encrypted for `"tls"`, e.g. port 465), `AUTH LOGIN` (the one
+widely-supported auth mechanism implemented — no `PLAIN`/`CRAM-MD5`),
+then `MAIL FROM`/`RCPT TO`/`DATA` with proper dot-stuffing. Opens and
+closes a fresh connection per `send()` call — no pooling/keep-alive,
+which is the right tradeoff for occasional transactional email, not bulk
+sending.
+
+**Known limitations, on purpose** (matches this framework's "minimal,
+not maximal" approach elsewhere — see `mool-jwt`'s HS256-only design):
+subjects and addresses are sent as plain UTF-8, not RFC 2047-encoded, so
+a strictly ASCII-only mail server could mangle non-ASCII subjects; only
+`AUTH LOGIN` is implemented (covers Gmail, SendGrid, Mailgun, and most
+real providers, but not an unusual server that only offers `PLAIN` or
+`CRAM-MD5`); and there's no attachment support.
+
 ---
 
 ## ORM Reference: Everything about Models
@@ -1446,6 +1547,20 @@ compiled with `new Function` (same technique EJS uses internally).
 | `layout(name, data?)` | In-template helper (always in scope). Wraps the view's rendered output in `resources/views/<name>.html`, passing it `data` merged with `children` (the view's rendered body). See [Layouts and reusable components](#layouts-and-reusable-components) in Step 8. |
 | `component(name, props?, childrenFn?)` | In-template helper (always in scope). Renders `resources/views/components/<name>.html` with `props`; the optional children callback's captured markup is passed as `props.children`, React-style. Must be called as a bare `<% %>` statement. |
 
+### Mail — `@codeseedelearning/mool-mail` (built and tested, not yet published)
+
+Zero-dependency SMTP client — no `nodemailer`, speaks the protocol
+directly over `node:net`/`node:tls`, the same "implement it yourself"
+approach `mool-jwt` takes for JWT. Full usage guide, config, and known
+limitations: [Mail: sending emails](#mail-sending-emails) above.
+
+| Feature | Details |
+|---|---|
+| `Mail.connect(config?)` | Configures the mailer from `config`, falling back to env vars (`MAIL_HOST`, `MAIL_PORT`, `MAIL_ENCRYPTION`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME`). Lazily called on first `send()` if you never call it yourself. Throws if `MAIL_HOST`/`fromAddress` end up unset either way. |
+| `Mail.send(message)` | `async` — sends `{ to, subject, html?, text?, cc?, from? }` over SMTP. Requires at least one of `html`/`text`. `from` defaults to the configured `fromAddress`/`fromName`, overridable per call. `to`/`cc` accept a single address or an array. Both `html` and `text` together sends a real `multipart/alternative` message. |
+| SMTP protocol coverage | `EHLO`, `STARTTLS` (for `MAIL_ENCRYPTION=starttls`, the default) or implicit TLS from the start (`"tls"`), `AUTH LOGIN`, `MAIL FROM`/`RCPT TO`/`DATA` with dot-stuffing. One connection per `send()` call — no pooling. |
+| `SmtpError` (exported) | Thrown for any SMTP-level failure — unexpected response code, unsupported `STARTTLS`, connection errors. |
+
 ### Distribution / tooling
 
 | Feature | Details |
@@ -1463,7 +1578,6 @@ These exist as empty directories (`.gitkeep` only) or don't exist at all:
   exists (see above), but only one runs at a time per process; not true
   connection-per-transaction concurrency.
 - **`queue`** — no background job system.
-- **`mail`** — no mailer/transport.
 - **`filesystem`** — no `Storage`-style abstraction for `public/`/`storage/`
   (the CLI has its own internal file-copying helper, but nothing
   user-facing).
@@ -1496,6 +1610,9 @@ These exist as empty directories (`.gitkeep` only) or don't exist at all:
   `500 Internal Server Error`; no custom exception classes, no per-route
   error handlers.
 - **No CORS support.**
+- **`mool-mail` isn't published yet** — the package is built and tested
+  (see [Mail: sending emails](#mail-sending-emails)), but not on npm and
+  not wired into the `basic` template's `package.json`/`.env.example`.
 - **Auth is JWT-only and stateless** — no refresh tokens, no
   logout/revocation mechanism.
 - **The container/provider system is unused** — real and wired into
@@ -1535,10 +1652,14 @@ Ranked by actual risk if shipped as-is, not by feature completeness:
 9. **Relationships/eager loading in the ORM** — `hasMany`/`belongsTo`/
    `with()` remain out of scope for now, but would be the next natural
    ORM step after the query builder.
+10. **✅ Mail** — built and tested (see
+    [Mail: sending emails](#mail-sending-emails)); `@codeseedelearning/mool-mail`
+    just isn't published yet, so it's not usable from a real project
+    until it is.
 
-Everything else in "What's NOT implemented" above (mail, queues, file
-storage, custom CLI commands, wiring up the container/providers) is real
-missing functionality, but additive — the app doesn't misbehave without
+Everything else in "What's NOT implemented" above (queues, file storage,
+custom CLI commands, wiring up the container/providers) is real missing
+functionality, but additive — the app doesn't misbehave without
 them, it just can't do those specific things yet.
 
 ---
