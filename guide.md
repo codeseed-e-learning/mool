@@ -20,13 +20,14 @@ and how to work on the framework itself. Nothing else to read.
 8. [Step 6: Create your first controller](#step-6-create-your-first-controller)
 9. [Step 7: Create your first Model](#step-7-create-your-first-model)
 10. [Step 8: Create your first view](#step-8-create-your-first-view)
-11. [More framework features, with usage examples](#more-framework-features-with-usage-examples)
-12. [ORM Reference: Everything about Models](#orm-reference-everything-about-models)
-13. [CLI command reference](#cli-command-reference)
-14. [Complete feature inventory](#complete-feature-inventory)
-15. [Roadmap — what's next](#roadmap--whats-next)
-16. [For maintainers: working on the framework itself](#for-maintainers-working-on-the-framework-itself)
-17. [Troubleshooting](#troubleshooting)
+11. [Deploying to production](#deploying-to-production)
+12. [More framework features, with usage examples](#more-framework-features-with-usage-examples)
+13. [ORM Reference: Everything about Models](#orm-reference-everything-about-models)
+14. [CLI command reference](#cli-command-reference)
+15. [Complete feature inventory](#complete-feature-inventory)
+16. [Roadmap — what's next](#roadmap--whats-next)
+17. [For maintainers: working on the framework itself](#for-maintainers-working-on-the-framework-itself)
+18. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -193,9 +194,11 @@ npm install
 This pulls in the actual framework packages your project depends on —
 `mool-core`, `mool-router`, `mool-config`, `mool-events`,
 `mool-validation`, `mool-cache`, `mool-database`, `mool-orm`, `mool-jwt`,
-`mool-auth`, `mool-view` — plus `@codeseedelearning/mool` itself as a
-`devDependency`. That last part is what lets `npm run dev` work using the
-locally-installed CLI, with no global install required at all.
+`mool-auth`, `mool-view` — plus `@codeseedelearning/mool` itself. That
+last part is what lets `npm run dev`/`start` work using the
+locally-installed CLI, with no global install required at all — it's a
+regular `dependency`, not a `devDependency`, since `npm run start` needs
+it in production too (see [Deploying to production](#deploying-to-production)).
 
 You should see something like (the exact count includes `mysql2`'s own
 transitive dependencies, so it'll drift over time — don't worry if it
@@ -713,6 +716,78 @@ missing file.
 
 No setup needed — every generated project already has a `public/`
 directory ready to drop files into.
+
+---
+
+## Deploying to production
+
+**There's no build step — deploy the same way you run it locally:**
+
+```bash
+npm install
+npm run start
+```
+
+That's it. `mool start` (`npm run start`) is exactly what "For production"
+means in this framework — it's `mool dev` minus the file watcher, same
+migrations-on-boot, same everything else. No `npm run build` needed, no
+compiled artifact to ship.
+
+**Why there's no build step, honestly:** every `@codeseedelearning/mool-*`
+package ships TypeScript source directly (`"main": "./src/index.ts"`, no
+compiled `dist/`) — `tsx` (bundled as a real dependency of the `mool` CLI,
+not a dev-only convenience) is what actually executes all of it, your app
+code and the framework's own code alike, both in `dev` and in `start`.
+This means `tsx` — and therefore the `mool` CLI — is a genuine **runtime**
+dependency, not a build tool you can leave behind. There is currently no
+way to produce a plain-`node`-runnable, `tsx`-free build: Node's own
+native TypeScript support explicitly refuses to type-strip `.ts` files
+found inside `node_modules` (a deliberate Node.js restriction, not a
+Mool bug), and since the framework packages themselves are `.ts` inside
+your project's `node_modules`, a compiled `dist/` of just *your* code
+still can't run standalone — it would immediately fail importing
+`@codeseedelearning/mool-core` (or any other framework package) with
+`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`.
+
+**What `npm run build` actually is here:** a type-checking gate
+(`tsc --noEmit`), not an artifact-producing build — run it in CI or
+before deploying to catch real type errors ahead of time (it emits
+nothing, so there's no `dist/` to ship or clean up). It's genuinely
+useful: writing this feature caught a real bug in the `portfolio` sample
+project — a route handler typed with an ad hoc `{ params: { id: string } }`
+instead of the real `Request` type, which `tsx` happily ignores at
+runtime but `tsc` correctly flagged.
+
+**One thing to actually get right when deploying:** make sure whatever
+host/CI you use runs a real `npm install` (or `npm ci`) as part of
+deployment — same as any Node app. If you're on an older clone of a
+`mool new` project from before this was fixed, double check `package.json`
+has `@codeseedelearning/mool` under `"dependencies"`, not
+`"devDependencies"` — some platforms/Dockerfiles run
+`npm ci --omit=dev` for smaller/faster production installs, and the CLI
+being a `devDependency` would make `npm run start` fail to find `mool`
+at all in that case. Freshly generated projects already have this right.
+
+**Environment variables to set on your host** — same names as local
+`.env`, just set through your platform's config/secrets UI instead of a
+file:
+
+```
+APP_KEY=<the same random key mool new generated, or a fresh one>
+DB_HOST=...
+DB_PORT=...
+DB_DATABASE=...
+DB_USERNAME=...
+DB_PASSWORD=...
+PORT=...   # most platforms (Railway, Render, Heroku, etc.) set this for
+           # you automatically — mool start already reads it either way
+```
+
+Migrations run automatically on every boot (same as local `dev`/`start`),
+so there's no separate migration step required in a deploy pipeline —
+though `mool migrate` still exists if you want one anyway (e.g. to run
+migrations once, ahead of a multi-instance rollout, rather than having
+every instance race to apply them on startup).
 
 ---
 
@@ -1567,7 +1642,7 @@ limitations: [Mail: sending emails](#mail-sending-emails) above.
 |---|---|
 | npm workspaces monorepo | `packages/*`, root `package.json` marked `private`. |
 | `npx @codeseedelearning/mool new my-app --basic` | Verified working end-to-end from the real registry — zero cloning. |
-| Local-CLI-via-devDependency pattern | Generated projects get `@codeseedelearning/mool` as a `devDependency`, so `npm run dev` uses the locally installed CLI — no global install needed. |
+| Local-CLI-via-dependency pattern | Generated projects get `@codeseedelearning/mool` as a regular `dependency` (not `devDependency` — it's needed at runtime for `npm run start` in production too, since `tsx` is what actually executes everything), so `npm run dev`/`start` both use the locally installed CLI — no global install needed. |
 | `basic` template | The only populated template; demonstrates Config, Events, Validation, Cache, real database persistence, full JWT auth, and view rendering together in `routes/web.ts`. |
 
 ### What's NOT implemented
@@ -1610,6 +1685,13 @@ These exist as empty directories (`.gitkeep` only) or don't exist at all:
   `500 Internal Server Error`; no custom exception classes, no per-route
   error handlers.
 - **No CORS support.**
+- **No `tsx`-free production build** — `tsc` can type-check your code
+  (`npm run build`), but can't produce a standalone `dist/` that runs
+  under plain `node`, since the framework packages themselves ship `.ts`
+  source and Node refuses to type-strip `.ts` inside `node_modules`. Not
+  a blocker for deploying (`npm run start` works fine, `tsx` is a real
+  runtime dependency of the `mool` CLI) — see
+  [Deploying to production](#deploying-to-production).
 - **`mool-mail` isn't published yet** — the package is built and tested
   (see [Mail: sending emails](#mail-sending-emails)), but not on npm and
   not wired into the `basic` template's `package.json`/`.env.example`.

@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "mool dev",
-    "start": "mool start"
+    "start": "mool start",
+    "build": "tsc --noEmit"
   },
   "dependencies": {
+    "@codeseedelearning/mool": "^0.0.6",
     "@codeseedelearning/mool-core": "^0.0.5",
     "@codeseedelearning/mool-router": "^0.0.4",
     "@codeseedelearning/mool-config": "^0.0.2",
@@ -21,7 +23,7 @@
     "@codeseedelearning/mool-view": "^0.0.3"
   },
   "devDependencies": {
-    "@codeseedelearning/mool": "^0.0.6",
-    "@types/node": "^22.5.0"
+    "@types/node": "^22.5.0",
+    "typescript": "^5.7.0"
   }
 }

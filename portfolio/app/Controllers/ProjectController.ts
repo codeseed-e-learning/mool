@@ -1,3 +1,4 @@
+import type { Request } from "@codeseedelearning/mool-http";
 import { validate } from "@codeseedelearning/mool-validation";
 import { ModelNotFoundError } from "@codeseedelearning/mool-orm";
 
@@ -10,7 +11,7 @@ export class ProjectController {
     return { projects };
   }
 
-  static async show(request: { params: { id: string } }) {
+  static async show(request: Request) {
     try {
       const project = await Project.findOrFail(request.params.id);
 
@@ -24,7 +25,7 @@ export class ProjectController {
     }
   }
 
-  static async store(request: { body: Record<string, unknown> }) {
+  static async store(request: Request) {
     const { valid, errors } = validate(request.body, {
       title: "required|string|min:2",
       description: "required|string|min:2",
