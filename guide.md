@@ -148,7 +148,9 @@ my-app/
 │   ├── Controllers/HomeController.ts
 │   ├── Middleware/
 │   └── Models/User.ts
-├── bootstrap/app.ts        # wires everything together, runs migrations
+├── bootstrap/
+│   ├── app.ts              # wires everything together, runs migrations
+│   └── server.ts           # standalone entrypoint for a compiled build — see "Deploying to production"
 ├── config/app.ts
 ├── database/
 │   └── migrations/0001_create_users_table.ts
@@ -755,6 +757,13 @@ npm install
 npm run build       # compiles your app's .ts to dist/ (tsc)
 node dist/bootstrap/server.js
 ```
+
+`bootstrap/server.ts` ships in every generated project by default — it's
+the only difference from `bootstrap/app.ts`: it actually calls
+`app.start(port)` (that call normally happens inside the `mool` CLI's
+`dev`/`start` commands, after they import `bootstrap/app.ts`, so a
+standalone compiled entrypoint needs its own copy of that one line).
+Nothing to add yourself.
 
 This is genuinely smaller and faster to boot in production — no TS
 transform step at startup, no `tsx`/`typescript` needed in your runtime
