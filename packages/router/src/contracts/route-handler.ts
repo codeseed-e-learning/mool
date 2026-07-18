@@ -1,4 +1,4 @@
-import type { Request } from "@codeseedelearning/mool-http";
+import type { Request } from "../request.js";
 
 export type RouteHandler = (
     request: Request

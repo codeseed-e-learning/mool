@@ -1,19 +1,30 @@
 {
   "name": "@codeseedelearning/mool-view",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A minimal, zero-dependency view/template engine for the Mool framework.",
   "type": "module",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
   "files": [
-    "src"
+    "dist"
   ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
   "publishConfig": {
     "access": "public"
   },
   "dependencies": {
-    "@codeseedelearning/mool-http": "^0.0.6"
+    "@codeseedelearning/mool-http": "^0.0.7"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
   }
 }

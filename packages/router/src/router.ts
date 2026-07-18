@@ -1,4 +1,4 @@
-import type { Request } from "@codeseedelearning/mool-http";
+import type { Request } from "./request.js";
 import { Route } from "./route.js";
 import { RouteMatcher } from "./matchers/route-matcher.js";
 import type { NextFunction } from "./contracts/middleware.js";

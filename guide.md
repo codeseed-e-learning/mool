@@ -39,27 +39,32 @@ registry).
 
 | Package | What it is | Version | Published? |
 |---|---|---|---|
-| `@codeseedelearning/mool` | The `mool` CLI (scaffolding, `dev`/`start`, `migrate`, etc.) | 0.0.8 | ✅ |
-| `@codeseedelearning/mool-core` | Application/DI container, service providers | 0.0.6 | ✅ |
-| `@codeseedelearning/mool-router` | Route definitions, matching, prefix/middleware groups, real `next()`-based middleware pipeline | 0.0.5 | ✅ |
-| `@codeseedelearning/mool-http` | Request/Response wrappers, `HttpResponse`, the HTTP server, static file serving from `public/` | 0.0.6 | ✅ |
-| `@codeseedelearning/mool-config` | `.env` + `config/*.ts` loading | 0.0.2 | ✅ |
-| `@codeseedelearning/mool-events` | `Event.listen()` / `Event.dispatch()` pub-sub | 0.0.2 | ✅ |
-| `@codeseedelearning/mool-validation` | Rule-based request validation | 0.0.2 | ✅ |
-| `@codeseedelearning/mool-cache` | In-memory cache with TTL | 0.0.2 | ✅ |
-| `@codeseedelearning/mool-database` | MySQL (`mysql2`) connections, migrations, transactions | 0.0.5 | ✅ |
-| `@codeseedelearning/mool-orm` | Active Record `Model` with a real chainable query builder | 0.0.5 | ✅ |
-| `@codeseedelearning/mool-jwt` | Zero-dependency HS256 JWT sign/verify | 0.0.2 | ✅ |
-| `@codeseedelearning/mool-auth` | Password hashing (scrypt) + JWT auth (`createToken`, `AuthMiddleware`) | 0.0.5 | ✅ |
-| `@codeseedelearning/mool-view` | Minimal zero-dependency view engine (`<%= %>`/`<% %>` tags), layouts + reusable components (`layout()`/`component()`), `View.render()`, `html()` | 0.0.4 | ✅ |
-| `@codeseedelearning/mool-mail` | Zero-dependency SMTP mail sending (`Mail.send()`), config (including the `from` address) driven entirely by `.env` | 0.0.1 | ❌ not yet |
+| `@codeseedelearning/mool` | The `mool` CLI (scaffolding, `dev`/`start`, `migrate`, etc.) | 0.0.9 | ✅ |
+| `@codeseedelearning/mool-core` | Application/DI container, service providers | 0.0.7 | ✅ |
+| `@codeseedelearning/mool-router` | Route definitions, matching, prefix/middleware groups, real `next()`-based middleware pipeline, the `Request` type | 0.0.6 | ✅ |
+| `@codeseedelearning/mool-http` | Response wrappers, `HttpResponse`, the HTTP server, static file serving from `public/` | 0.0.7 | ✅ |
+| `@codeseedelearning/mool-config` | `.env` + `config/*.ts` loading | 0.0.3 | ✅ |
+| `@codeseedelearning/mool-events` | `Event.listen()` / `Event.dispatch()` pub-sub | 0.0.3 | ✅ |
+| `@codeseedelearning/mool-validation` | Rule-based request validation | 0.0.3 | ✅ |
+| `@codeseedelearning/mool-cache` | In-memory cache with TTL | 0.0.3 | ✅ |
+| `@codeseedelearning/mool-database` | MySQL (`mysql2`) connections, migrations, transactions | 0.0.6 | ✅ |
+| `@codeseedelearning/mool-orm` | Active Record `Model` with a real chainable query builder | 0.0.6 | ✅ |
+| `@codeseedelearning/mool-jwt` | Zero-dependency HS256 JWT sign/verify | 0.0.3 | ✅ |
+| `@codeseedelearning/mool-auth` | Password hashing (scrypt) + JWT auth (`createToken`, `AuthMiddleware`) | 0.0.6 | ✅ |
+| `@codeseedelearning/mool-view` | Minimal zero-dependency view engine (`<%= %>`/`<% %>` tags), layouts + reusable components (`layout()`/`component()`), `View.render()`, `html()` | 0.0.5 | ✅ |
+| `@codeseedelearning/mool-mail` | Zero-dependency SMTP mail sending (`Mail.send()`), config (including the `from` address) driven entirely by `.env` | 0.0.2 | ✅ |
 
-Everything but `mool-mail` is live on npm — a fresh `npx @codeseedelearning/mool
-new` pulls every other package straight from the registry, no
-local/unpublished state. `mool-mail` is built and tested (see
-[Mail](#mail-sending-emails) below) but not yet published, so it isn't
-wired into `basic` template's `package.json`/`.env.example` yet — install
-it separately once it ships.
+**As of this version, every package above ships compiled JavaScript**
+(`dist/`, built via `tsc`), not raw TypeScript source — see
+[Distribution / tooling](#distribution--tooling) and
+[Deploying to production](#deploying-to-production) for what that
+changes and unlocks.
+
+Everything is live on npm — a fresh `npx @codeseedelearning/mool new`
+pulls every package straight from the registry, no local/unpublished
+state. `mool-mail` isn't wired into the `basic` template's
+`package.json`/`.env.example` yet (see [Mail](#mail-sending-emails)
+below) — install it separately for now: `npm install @codeseedelearning/mool-mail`.
 
 ---
 
@@ -721,52 +726,73 @@ directory ready to drop files into.
 
 ## Deploying to production
 
-**There's no build step — deploy the same way you run it locally:**
+There are two valid ways to run a Mool app in production — pick whichever
+fits your platform.
+
+### Option 1: zero build step
 
 ```bash
 npm install
 npm run start
 ```
 
-That's it. `mool start` (`npm run start`) is exactly what "For production"
-means in this framework — it's `mool dev` minus the file watcher, same
-migrations-on-boot, same everything else. No `npm run build` needed, no
-compiled artifact to ship.
+`mool start` (`npm run start`) is `mool dev` minus the file watcher —
+same migrations-on-boot, same everything else, running your `.ts` source
+directly via `tsx`. Nothing to compile, nothing to ship beyond your
+source and `node_modules`. This is the simplest option and works
+anywhere Node runs.
 
-**Why there's no build step, honestly:** every `@codeseedelearning/mool-*`
-package ships TypeScript source directly (`"main": "./src/index.ts"`, no
-compiled `dist/`) — `tsx` (bundled as a real dependency of the `mool` CLI,
-not a dev-only convenience) is what actually executes all of it, your app
-code and the framework's own code alike, both in `dev` and in `start`.
-This means `tsx` — and therefore the `mool` CLI — is a genuine **runtime**
-dependency, not a build tool you can leave behind. There is currently no
-way to produce a plain-`node`-runnable, `tsx`-free build: Node's own
+### Option 2: compiled build, no `tsx` at runtime
+
+Every `@codeseedelearning/mool-*` package ships a real compiled `dist/`
+(`"main": "./dist/index.js"`, built via `tsc` automatically before every
+`npm publish` via a `prepublishOnly` script) — not raw `.ts` source. That
+means once your own app is compiled too, the whole thing can run under
+**plain `node`**, no `tsx`/`mool` CLI involved at runtime at all:
+
+```bash
+npm install
+npm run build       # compiles your app's .ts to dist/ (tsc)
+node dist/bootstrap/server.js
+```
+
+This is genuinely smaller and faster to boot in production — no TS
+transform step at startup, no `tsx`/`typescript` needed in your runtime
+image at all (only in the build stage, e.g. a Docker multi-stage build:
+full `npm install` + `npm run build` in a builder stage, then copy just
+`dist/`, `node_modules --omit=dev`, and your non-code assets —
+`resources/views/`, `public/`, `database/migrations/` — into a slim
+runtime stage). Verified end-to-end by packing every framework package
+into real tarballs (exactly what `npm publish` would produce), installing
+them into a scratch project, compiling it, and running the compiled
+output with plain `node` — no `ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`,
+no `tsx` anywhere in the process.
+
+**This wasn't always true.** Framework packages used to ship raw `.ts`
+source directly (`"main": "./src/index.ts"`), which made `tsx` a hard
+runtime dependency for everything, `dev` and `start` alike — Node's own
 native TypeScript support explicitly refuses to type-strip `.ts` files
-found inside `node_modules` (a deliberate Node.js restriction, not a
-Mool bug), and since the framework packages themselves are `.ts` inside
-your project's `node_modules`, a compiled `dist/` of just *your* code
-still can't run standalone — it would immediately fail importing
-`@codeseedelearning/mool-core` (or any other framework package) with
-`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`.
+found inside `node_modules`, so a compiled build of just *your* code
+couldn't run standalone; it would fail the moment it imported
+`@codeseedelearning/mool-core` (or any other framework package). That's
+fixed now — see [Distribution / tooling](#distribution--tooling) in the
+feature inventory for what changed under the hood.
 
-**What `npm run build` actually is here:** a type-checking gate
-(`tsc --noEmit`), not an artifact-producing build — run it in CI or
-before deploying to catch real type errors ahead of time (it emits
-nothing, so there's no `dist/` to ship or clean up). It's genuinely
-useful: writing this feature caught a real bug in the `portfolio` sample
-project — a route handler typed with an ad hoc `{ params: { id: string } }`
-instead of the real `Request` type, which `tsx` happily ignores at
-runtime but `tsc` correctly flagged.
+Either option is a legitimate choice — Option 1 if you want the
+simplest possible deploy with nothing to build; Option 2 if your
+platform wants a compiled artifact, or you want the smallest/fastest
+production runtime.
 
-**One thing to actually get right when deploying:** make sure whatever
+**One thing to actually get right either way:** make sure whatever
 host/CI you use runs a real `npm install` (or `npm ci`) as part of
 deployment — same as any Node app. If you're on an older clone of a
 `mool new` project from before this was fixed, double check `package.json`
 has `@codeseedelearning/mool` under `"dependencies"`, not
 `"devDependencies"` — some platforms/Dockerfiles run
 `npm ci --omit=dev` for smaller/faster production installs, and the CLI
-being a `devDependency` would make `npm run start` fail to find `mool`
-at all in that case. Freshly generated projects already have this right.
+being a `devDependency` would make `npm run start` (Option 1) fail to
+find `mool` at all in that case. Freshly generated projects already
+have this right.
 
 **Environment variables to set on your host** — same names as local
 `.env`, just set through your platform's config/secrets UI instead of a
@@ -914,9 +940,8 @@ tolerates a trailing slash — normalized the same way either form.
 
 ### Mail: sending emails
 
-**Not yet published** (see the [Packages](#packages) table) — this section
-documents what's built and tested, ready for once `@codeseedelearning/mool-mail`
-ships.
+Not wired into the `basic` template yet — install it yourself:
+`npm install @codeseedelearning/mool-mail`.
 
 `Mail.send()` sends a real email over SMTP — no external mail library,
 just `node:net`/`node:tls` speaking the protocol directly (the same
@@ -1471,7 +1496,7 @@ routes/database/config are all wired via plain static imports instead.
 The container/provider system is real and working, just currently unused
 in practice.
 
-### Router — `@codeseedelearning/mool-router@0.0.5` (published)
+### Router — `@codeseedelearning/mool-router@0.0.6` (published)
 
 | Feature | Details |
 |---|---|
@@ -1481,13 +1506,14 @@ in practice.
 | `Route.group(options, callback)` | Groups routes under a shared `prefix` and/or shared `middleware`, applied to every `Route.get/post/put/delete` call made inside `callback`. Nestable — see [Route groups](#route-groups-prefix-and-middleware) below. |
 | **Real middleware pipeline** | `Middleware.handle(request, next)` — an onion-style chain built with `reduceRight`. Each middleware calls `next()` to continue (and gets the downstream result back), or returns its own value to short-circuit. Fully async. Mutate `request` before calling `next()` to pass data forward. Group middleware runs outermost, per-route `.middleware()` closest to the handler. |
 | `Router.resolve(request)` | Matches method+path, builds the middleware pipeline, awaits and returns its result. |
+| `Request` | Wraps Node's `IncomingMessage`: `.method`, `.url`, `.headers`, `.params`, `.body`, `.state`. Lives here (not in `mool-http`) because the `Middleware`/`RouteHandler` contracts are typed against it — `mool-http` re-exports it, so existing `import { Request } from "@codeseedelearning/mool-http"` code is unaffected. See [Distribution / tooling](#distribution--tooling). |
 | 404 | Returns the literal string `"404 Not Found"` when no route matches — doesn't set a real HTTP status code (known gap). |
 
-### HTTP — `@codeseedelearning/mool-http@0.0.6` (published)
+### HTTP — `@codeseedelearning/mool-http@0.0.7` (published)
 
 | Feature | Details |
 |---|---|
-| `Request` | Wraps Node's `IncomingMessage`: `.method`, `.url`, `.headers`, `.params`, `.body` (JSON-parsed, falls back to `{}` on parse failure), and `.state` — a generic bag middleware use to pass data forward, e.g. `request.state.user = ...`. |
+| `Request` | Re-exported from `@codeseedelearning/mool-router` — see the Router section above for what it wraps. |
 | `Response` | `.status(code)`, `.header(name, value)`, `.send(string)` (text/plain), `.json(data)` — all chainable except the terminal two. |
 | `HttpResponse` | Return `new HttpResponse(status, body)` from a route handler or middleware to control the actual HTTP status code — plain return values always send `200`. This is what makes `AuthMiddleware`'s 401 a real 401. |
 | `Server` | Raw `node:http` server: on `GET`/`HEAD`, first checks for a matching file under `public/` and streams it back with an extension-based `Content-Type` (see [Static assets](#static-assets-css-js-images-public) in Step 8); otherwise reads the full request body, JSON-parses it, calls the router; catches thrown errors into a generic `500 {"success":false,"message":"Internal Server Error"}`. |
@@ -1529,7 +1555,7 @@ in practice.
 Single-process, in-memory only — doesn't survive a restart, no
 Redis/file/Memcached drivers.
 
-### Database — `@codeseedelearning/mool-database@0.0.5` (published)
+### Database — `@codeseedelearning/mool-database@0.0.6` (published)
 
 MySQL/MariaDB only, via `mysql2` (the one genuine external dependency
 anywhere in this framework), behind a small `?`-placeholder query API.
@@ -1547,7 +1573,7 @@ anywhere in this framework), behind a small `?`-placeholder query API.
 Every method is `async` — real network I/O on the MySQL side means
 there's no way to represent that behind a sync API.
 
-### ORM — `@codeseedelearning/mool-orm@0.0.5` (published)
+### ORM — `@codeseedelearning/mool-orm@0.0.6` (published)
 
 An Active Record-style layer on top of `mool-database`, with a real
 chainable query builder underneath the `Model` static methods. See the
@@ -1590,7 +1616,7 @@ external JWT library).
 Only one algorithm exists on purpose — no RS256/alg-negotiation, so
 there's no "alg: none" class of vulnerability to worry about.
 
-### Auth — `@codeseedelearning/mool-auth@0.0.5` (published)
+### Auth — `@codeseedelearning/mool-auth@0.0.6` (published)
 
 JWT-based only (no sessions, no OAuth) — password hashing + token
 issuance/verification, built on `mool-jwt`.
@@ -1622,7 +1648,7 @@ compiled with `new Function` (same technique EJS uses internally).
 | `layout(name, data?)` | In-template helper (always in scope). Wraps the view's rendered output in `resources/views/<name>.html`, passing it `data` merged with `children` (the view's rendered body). See [Layouts and reusable components](#layouts-and-reusable-components) in Step 8. |
 | `component(name, props?, childrenFn?)` | In-template helper (always in scope). Renders `resources/views/components/<name>.html` with `props`; the optional children callback's captured markup is passed as `props.children`, React-style. Must be called as a bare `<% %>` statement. |
 
-### Mail — `@codeseedelearning/mool-mail` (built and tested, not yet published)
+### Mail — `@codeseedelearning/mool-mail` (published)
 
 Zero-dependency SMTP client — no `nodemailer`, speaks the protocol
 directly over `node:net`/`node:tls`, the same "implement it yourself"
@@ -1642,8 +1668,10 @@ limitations: [Mail: sending emails](#mail-sending-emails) above.
 |---|---|
 | npm workspaces monorepo | `packages/*`, root `package.json` marked `private`. |
 | `npx @codeseedelearning/mool new my-app --basic` | Verified working end-to-end from the real registry — zero cloning. |
-| Local-CLI-via-dependency pattern | Generated projects get `@codeseedelearning/mool` as a regular `dependency` (not `devDependency` — it's needed at runtime for `npm run start` in production too, since `tsx` is what actually executes everything), so `npm run dev`/`start` both use the locally installed CLI — no global install needed. |
+| Local-CLI-via-dependency pattern | Generated projects get `@codeseedelearning/mool` as a regular `dependency` (not `devDependency` — needed at runtime for `npm run start` too when running the zero-build way, see [Deploying to production](#deploying-to-production)), so `npm run dev`/`start` both use the locally installed CLI — no global install needed. |
 | `basic` template | The only populated template; demonstrates Config, Events, Validation, Cache, real database persistence, full JWT auth, and view rendering together in `routes/web.ts`. |
+| Every `mool-*` package ships compiled `dist/` | `"main"`/`"types"` point at `./dist/index.js`/`./dist/index.d.ts`, `"files": ["dist"]` — not raw `.ts` source. Each package has its own `tsconfig.json` + `"build": "tsc"`, auto-run via `"prepublishOnly"` before every `npm publish` so what actually ships is always freshly compiled. This is what makes the compiled-build production path in [Deploying to production](#deploying-to-production) possible — Node never has to type-strip `.ts` inside `node_modules`, because there isn't any. |
+| `Request` lives in `mool-router`, not `mool-http` | Moved to break a real circular package dependency: `mool-router`'s `Middleware`/`RouteHandler` contracts are typed against `Request`, while `mool-http`'s `Server` needs `mool-router`'s `Router` class at runtime — both packages needing each other made them impossible to build independently. `mool-http` re-exports `Request` from `mool-router`, so `import { Request } from "@codeseedelearning/mool-http"` still works unchanged. |
 
 ### What's NOT implemented
 
@@ -1685,16 +1713,10 @@ These exist as empty directories (`.gitkeep` only) or don't exist at all:
   `500 Internal Server Error`; no custom exception classes, no per-route
   error handlers.
 - **No CORS support.**
-- **No `tsx`-free production build** — `tsc` can type-check your code
-  (`npm run build`), but can't produce a standalone `dist/` that runs
-  under plain `node`, since the framework packages themselves ship `.ts`
-  source and Node refuses to type-strip `.ts` inside `node_modules`. Not
-  a blocker for deploying (`npm run start` works fine, `tsx` is a real
-  runtime dependency of the `mool` CLI) — see
-  [Deploying to production](#deploying-to-production).
-- **`mool-mail` isn't published yet** — the package is built and tested
-  (see [Mail: sending emails](#mail-sending-emails)), but not on npm and
-  not wired into the `basic` template's `package.json`/`.env.example`.
+- **`mool-mail` isn't wired into the `basic` template** — published and
+  usable (see [Mail: sending emails](#mail-sending-emails)), but not yet
+  added to the template's `package.json`/`.env.example`, so a fresh
+  `mool new` project doesn't have it by default.
 - **Auth is JWT-only and stateless** — no refresh tokens, no
   logout/revocation mechanism.
 - **The container/provider system is unused** — real and wired into
@@ -1734,10 +1756,9 @@ Ranked by actual risk if shipped as-is, not by feature completeness:
 9. **Relationships/eager loading in the ORM** — `hasMany`/`belongsTo`/
    `with()` remain out of scope for now, but would be the next natural
    ORM step after the query builder.
-10. **✅ Mail** — built and tested (see
-    [Mail: sending emails](#mail-sending-emails)); `@codeseedelearning/mool-mail`
-    just isn't published yet, so it's not usable from a real project
-    until it is.
+10. **✅ Mail** — done and published (see
+    [Mail: sending emails](#mail-sending-emails)); just not wired into
+    the `basic` template's `package.json`/`.env.example` by default yet.
 
 Everything else in "What's NOT implemented" above (queues, file storage,
 custom CLI commands, wiring up the container/providers) is real missing
@@ -1801,6 +1822,25 @@ rm -rf node_modules my-app/node_modules package-lock.json
 npm install
 ```
 
+### Gotcha: editing a package's `src/` doesn't do anything until you rebuild it
+
+Every `@codeseedelearning/mool-*` package's `"main"` now points at
+`./dist/index.js`, not `./src/index.ts` (see
+[Distribution / tooling](#distribution--tooling)) — so `tsx` (via
+`mool dev`/`start` in a consuming project like `my-app`) resolves the
+**compiled** output through the workspace symlink, not the live
+TypeScript source. Edit `packages/http/src/server.ts` and restart
+`mool dev` in `my-app` and you'll see *no change* until you rebuild:
+
+```bash
+cd packages/http && npm run build
+```
+
+There's no cross-package watch mode set up — if you're actively
+iterating on a framework package, either rebuild it after each change,
+or (faster for tight loops) temporarily run `npx tsc --watch` in that
+package's directory while you work.
+
 ### TypeScript / NodeNext module resolution
 
 Every package uses `"moduleResolution": "NodeNext"`, which enforces real
@@ -1821,10 +1861,16 @@ layout) — `my-app`'s and the template's `tsconfig.json` both set
 
 ### Publishing the packages
 
+Each package's `"prepublishOnly": "npm run build"` means `npm publish`
+compiles it fresh automatically — you never need to manually run
+`npm run build` before publishing (though it's a good sanity check to
+run it yourself first, so a compile error surfaces before you're mid-publish).
+
 Packages must publish in dependency order (each depends on the one
-before it): `mool-http` → `mool-router` → `mool-core` → `mool`, separately
-`mool-database` → `mool-orm`, and separately `mool-jwt` → `mool-auth`.
-`mool-config`, `mool-events`, `mool-validation`, and `mool-cache` have no
+before it): `mool-router` → `mool-http` → `mool-core` → `mool`,
+separately `mool-database` → `mool-orm`, and separately `mool-jwt` →
+`mool-auth`; `mool-view` also depends on `mool-http`. `mool-config`,
+`mool-events`, `mool-validation`, `mool-cache`, and `mool-mail` have no
 cross-package dependencies, so they can publish any time. All packages
 already have `publishConfig.access: "public"` set, so a plain
 `npm publish` works for scoped packages without extra flags.
@@ -1832,18 +1878,20 @@ already have `publishConfig.access: "public"` set, so a plain
 ```bash
 npm login   # once, interactively — do this yourself, not via an agent
 
-cd packages/http         && npm publish
-cd ../router              && npm publish
-cd ../core                && npm publish
-cd ../cli                 && npm publish
-cd ../config              && npm publish
-cd ../events               && npm publish
-cd ../validation           && npm publish
-cd ../cache                 && npm publish
-cd ../database                && npm publish
-cd ../orm                      && npm publish
-cd ../jwt                       && npm publish
-cd ../auth                       && npm publish
+cd packages/router        && npm publish
+cd ../http                 && npm publish
+cd ../core                  && npm publish
+cd ../cli                    && npm publish
+cd ../config                  && npm publish
+cd ../events                   && npm publish
+cd ../validation                && npm publish
+cd ../cache                      && npm publish
+cd ../database                    && npm publish
+cd ../orm                          && npm publish
+cd ../jwt                           && npm publish
+cd ../auth                           && npm publish
+cd ../view                            && npm publish
+cd ../mail                             && npm publish
 ```
 
 Publishing requires npm's 2FA on the account. If you don't have OTP-based
@@ -1856,12 +1904,15 @@ and delete it immediately after use.
 Before publishing for real, verify the whole chain works exactly as an
 external user would see it — pack each package to a tarball and install
 from the tarballs in a directory *outside* this repo (so workspace
-symlinks can't paper over a broken dependency):
+symlinks can't paper over a broken dependency). This is exactly how the
+compiled-`dist/` migration itself was verified — every package packed,
+installed from the `.tgz` files into a scratch project, compiled, and run
+with plain `node`:
 
 ```bash
 mkdir -p /tmp/pack-test && cd /tmp/pack-test
-npm pack /path/to/mool/packages/http
 npm pack /path/to/mool/packages/router
+npm pack /path/to/mool/packages/http
 npm pack /path/to/mool/packages/core
 npm pack /path/to/mool/packages/cli
 ```
@@ -1869,7 +1920,8 @@ npm pack /path/to/mool/packages/cli
 Then create a scratch project whose `package.json` points its dependencies
 at the `.tgz` files (`"@codeseedelearning/mool-core":
 "file:../pack-test/codeseedelearning-mool-core-0.0.1.tgz"`, etc.) and run
-`npm install && npm run dev` there.
+`npm install && npm run dev` there — or `npx tsc && node dist/bootstrap/server.js`
+to verify the plain-`node`, no-`tsx` path specifically.
 
 Bump the `version` field in whichever package.json(s) changed before
 re-publishing; npm rejects re-publishing an existing version. Note npm's

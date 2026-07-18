@@ -1,19 +1,30 @@
 {
   "name": "@codeseedelearning/mool-database",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "MySQL database connection and migrations for the Mool framework.",
   "type": "module",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
   "files": [
-    "src"
+    "dist"
   ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
   "publishConfig": {
     "access": "public"
   },
   "dependencies": {
     "mysql2": "^3.11.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
   }
 }

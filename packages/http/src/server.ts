@@ -2,8 +2,7 @@ import http from "node:http";
 import { createReadStream, existsSync, statSync } from "node:fs";
 import path from "node:path";
 
-import { Router } from "@codeseedelearning/mool-router";
-import { Request } from "./request.js";
+import { Router, Request } from "@codeseedelearning/mool-router";
 import { Response } from "./response.js";
 import { HttpResponse } from "./http-response.js";
 
