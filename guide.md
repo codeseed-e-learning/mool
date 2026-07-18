@@ -39,7 +39,7 @@ registry).
 
 | Package | What it is | Version | Published? |
 |---|---|---|---|
-| `@codeseedelearning/mool` | The `mool` CLI (scaffolding, `dev`/`start`, `migrate`, etc.) | 0.0.9 | ✅ |
+| `@codeseedelearning/mool` | The `mool` CLI (scaffolding, `dev`/`start`, `migrate`, etc.) | 0.0.10 | ✅ |
 | `@codeseedelearning/mool-core` | Application/DI container, service providers | 0.0.7 | ✅ |
 | `@codeseedelearning/mool-router` | Route definitions, matching, prefix/middleware groups, real `next()`-based middleware pipeline, the `Request` type | 0.0.6 | ✅ |
 | `@codeseedelearning/mool-http` | Response wrappers, `HttpResponse`, the HTTP server, static file serving from `public/` | 0.0.7 | ✅ |

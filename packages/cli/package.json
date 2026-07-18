@@ -1,6 +1,6 @@
 {
   "name": "@codeseedelearning/mool",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "CLI for the Mool framework — scaffold and run Mool projects.",
   "type": "module",
   "bin": {
